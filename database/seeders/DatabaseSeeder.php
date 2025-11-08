@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Models\Query;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
@@ -15,11 +16,39 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+        Query::insert([
+            [
+                'name' => 'Q1',
+                'description' => 'Query 1',
+            ],
+            [
+                'name' => 'Q2',
+                'description' => 'Query 2',
+            ],
+            [
+                'name' => 'Q3',
+                'description' => 'Query 3',
+            ],
         ]);
+
+        $queries = Query::all();
+        foreach ($queries as $query) {
+            $query->presets()->createMany([
+                [
+                    'name' => 'Preset 1',
+                    'rest_query' => 'https://example.com/api/v1/users',
+                    'graphql_query' => 'query { users { id name } }',
+                    'description' => 'Description of Preset 1',
+                    'is_active' => true,
+                ],
+                [
+                    'name' => 'Preset 2',
+                    'rest_query' => 'https://example.com/api/v1/users/1',
+                    'graphql_query' => 'query { user(id: 1) { id name } }',
+                    'description' => 'Description of Preset 2',
+                ]
+            ]);
+        }
+
     }
 }
