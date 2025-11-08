@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -16,6 +17,7 @@ class ApiTestResult extends Model
         return [
             'response' => 'array',
             'api_type' => ApiType::class,
+            'status' => ApiStatusType::class,
             'cpu_usage' => 'decimal:2',
             'mem_usage' => 'decimal:2',
         ];

@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
@@ -14,10 +15,11 @@ return new class extends Migration {
             $table->foreignId('query_id');
             $table->foreignId('preset_id');
             $table->enum('api_type', ApiType::values());
-            $table->json('response');
-            $table->integer('payload');
-            $table->decimal('cpu_usage');
-            $table->decimal('mem_usage');
+            $table->enum('status', ApiStatusType::values())->default(ApiStatusType::Processing->value);
+            $table->json('response')->nullable();
+            $table->integer('payload')->nullable();
+            $table->decimal('cpu_usage')->nullable();
+            $table->decimal('mem_usage')->nullable();
             $table->timestamps();
         });
     }

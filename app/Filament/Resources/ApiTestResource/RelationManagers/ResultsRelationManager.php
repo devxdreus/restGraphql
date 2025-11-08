@@ -13,6 +13,7 @@ use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Forms\Components\Select;
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
@@ -36,8 +37,6 @@ class ResultsRelationManager extends RelationManager
                 Select::make('api_type')
                     ->options(ApiType::class)
                     ->required(),
-                TextInput::make('response')
-                    ->required(),
                 TextInput::make('payload')
                     ->required()
                     ->numeric(),
@@ -47,13 +46,18 @@ class ResultsRelationManager extends RelationManager
                 TextInput::make('mem_usage')
                     ->required()
                     ->numeric(),
+                Textarea::make('response')
+                    ->required()
+                    ->columnSpanFull()
+                    ->formatStateUsing(fn($state) => json_encode($state, JSON_PRETTY_PRINT))
+                    ->rows(8),
             ]);
     }
 
     public function table(Table $table): Table
     {
         return $table
-            ->recordTitleAttribute('api_test_id')
+            ->recordTitleAttribute('api_type')
             ->columns([
                 TextColumn::make('queryModel.name')
                     ->label('Query')
@@ -62,6 +66,10 @@ class ResultsRelationManager extends RelationManager
                     ->searchable(),
                 TextColumn::make('api_type')
                     ->badge()
+                    ->searchable(),
+                TextColumn::make('status')
+                    ->badge()
+                    ->sortable()
                     ->searchable(),
                 TextColumn::make('payload')
                     ->numeric(locale: 'id')
@@ -88,8 +96,8 @@ class ResultsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                CreateAction::make(),
-                AssociateAction::make(),
+//                CreateAction::make(),
+//                AssociateAction::make(),
             ])
             ->recordActions([
                 ViewAction::make(),
