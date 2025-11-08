@@ -20,7 +20,7 @@ class ApiTestResultFactory extends Factory
         return [
             'api_type' => $this->faker->randomElement(ApiType::values()),
             'status' => $this->faker->randomElement(ApiStatusType::values()),
-            'response' => $this->faker->words(),
+            'response' => $this->faker->words(10),
             'payload' => $this->faker->randomNumber(3),
             'cpu_usage' => $this->faker->randomFloat(2, 0, 50),
             'mem_usage' => $this->faker->randomFloat(2, 0, 50),

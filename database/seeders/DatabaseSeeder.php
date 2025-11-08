@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Enums\ApiStatusType;
+use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\ApiTestResult;
 use App\Models\Query;
@@ -18,20 +20,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        Query::insert([
-            [
-                'name' => 'Q1',
-                'description' => 'Query 1',
-            ],
-            [
-                'name' => 'Q2',
-                'description' => 'Query 2',
-            ],
-            [
-                'name' => 'Q3',
-                'description' => 'Query 3',
-            ],
-        ]);
+        $data = [];
+        for ($i = 1; $i <= 3; $i++) {
+            $data[] = [
+                'name' => "Q$i",
+                'description' => "Query $i",
+            ];
+        }
+        Query::insert($data);
 
         $queries = Query::all();
         foreach ($queries as $query) {
@@ -52,8 +48,50 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        // this will generate random data
+//        ApiTest::factory(10)
+//            ->has(ApiTestResult::factory()->count(10), 'results')
+//            ->create();
+
+        // this will generate all succeeded tests
         ApiTest::factory(10)
-            ->has(ApiTestResult::factory()->count(10), 'results')
-            ->create();
+            ->create([
+                'status' => ApiStatusType::Success
+            ])
+            ->map(function ($test) {
+                // for 3 queries
+                for ($q = 1; $q <= 3; $q++) {
+
+                    // each query will have 3 results for each api type
+                    for ($j = 1; $j <= 3; $j++) {
+                        ApiTestResult::factory()->create([
+                            'api_test_id' => $test->id,
+                            'status' => ApiStatusType::Success,
+                            'api_type' => ApiType::Rest,
+                            'query_id' => Query::find($q),
+                            'preset_id' => Query::find($q)->activePreset
+                        ]);
+                    }
+                    for ($j = 1; $j <= 3; $j++) {
+                        ApiTestResult::factory()->create([
+                            'api_test_id' => $test->id,
+                            'status' => ApiStatusType::Success,
+                            'api_type' => ApiType::Graphql,
+                            'query_id' => Query::find($q),
+                            'preset_id' => Query::find($q)->activePreset
+                        ]);
+                    }
+                    for ($j = 1; $j <= 3; $j++) {
+                        ApiTestResult::factory()->create([
+                            'api_test_id' => $test->id,
+                            'status' => ApiStatusType::Success,
+                            'api_type' => ApiType::Integrated,
+                            'query_id' => Query::find($q),
+                            'preset_id' => Query::find($q)->activePreset
+                        ]);
+                    }
+
+                }
+            });
     }
 }

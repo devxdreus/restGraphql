@@ -28,6 +28,8 @@ class ResultsRelationManager extends RelationManager
     {
         return $schema
             ->components([
+                TextInput::make('id')
+                    ->hiddenOn('create'),
                 TextInput::make('query_id')
                     ->required()
                     ->numeric(),
