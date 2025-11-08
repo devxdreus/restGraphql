@@ -68,6 +68,7 @@ class DatabaseSeeder extends Seeder
                             'api_test_id' => $test->id,
                             'status' => ApiStatusType::Success,
                             'api_type' => ApiType::Rest,
+                            'request_type' => ApiType::Rest,
                             'query_id' => Query::find($q),
                             'preset_id' => Query::find($q)->activePreset
                         ]);
@@ -77,15 +78,18 @@ class DatabaseSeeder extends Seeder
                             'api_test_id' => $test->id,
                             'status' => ApiStatusType::Success,
                             'api_type' => ApiType::Graphql,
+                            'request_type' => ApiType::Graphql,
                             'query_id' => Query::find($q),
                             'preset_id' => Query::find($q)->activePreset
                         ]);
                     }
+                    $useRest = rand(0, 1);
                     for ($j = 1; $j <= 3; $j++) {
                         ApiTestResult::factory()->create([
                             'api_test_id' => $test->id,
                             'status' => ApiStatusType::Success,
                             'api_type' => ApiType::Integrated,
+                            'request_type' => $useRest ? ApiType::Rest : ApiType::Graphql,
                             'query_id' => Query::find($q),
                             'preset_id' => Query::find($q)->activePreset
                         ]);

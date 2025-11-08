@@ -39,6 +39,9 @@ class ResultsRelationManager extends RelationManager
                 Select::make('api_type')
                     ->options(ApiType::class)
                     ->required(),
+                Select::make('request_method')
+                    ->options(ApiType::class)
+                    ->required(),
                 TextInput::make('payload')
                     ->required()
                     ->numeric(),
@@ -64,9 +67,12 @@ class ResultsRelationManager extends RelationManager
                 TextColumn::make('queryModel.name')
                     ->label('Query')
                     ->sortable(),
-                TextColumn::make('preset.name')
-                    ->searchable(),
                 TextColumn::make('api_type')
+                    ->label('API')
+                    ->badge()
+                    ->searchable(),
+                TextColumn::make('request_type')
+                    ->label('Request')
                     ->badge()
                     ->searchable(),
                 TextColumn::make('status')
@@ -76,6 +82,10 @@ class ResultsRelationManager extends RelationManager
                 TextColumn::make('payload')
                     ->numeric(locale: 'id')
                     ->formatStateUsing(fn($state) => $state . ' bytes')
+                    ->sortable(),
+                TextColumn::make('response_time')
+                    ->numeric(locale: 'id')
+                    ->formatStateUsing(fn($state) => $state . 'ms')
                     ->sortable(),
                 TextColumn::make('cpu_usage')
                     ->numeric(locale: 'id')

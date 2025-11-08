@@ -19,9 +19,11 @@ class ApiTestResultFactory extends Factory
     {
         return [
             'api_type' => $this->faker->randomElement(ApiType::values()),
+            'request_type' => $this->faker->randomElement(ApiType::values()),
             'status' => $this->faker->randomElement(ApiStatusType::values()),
             'response' => $this->faker->words(10),
             'payload' => $this->faker->randomNumber(3),
+            'response_time' => $this->faker->numberBetween(20, 2000),
             'cpu_usage' => $this->faker->randomFloat(2, 0, 50),
             'mem_usage' => $this->faker->randomFloat(2, 0, 50),
             'created_at' => Carbon::now(),

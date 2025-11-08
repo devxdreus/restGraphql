@@ -15,9 +15,11 @@ return new class extends Migration {
             $table->foreignId('query_id');
             $table->foreignId('preset_id');
             $table->enum('api_type', ApiType::values());
+            $table->enum('request_type', ApiType::values());
             $table->enum('status', ApiStatusType::values())->default(ApiStatusType::Processing->value);
             $table->json('response')->nullable();
             $table->integer('payload')->nullable();
+            $table->integer('response_time')->nullable();
             $table->decimal('cpu_usage')->nullable();
             $table->decimal('mem_usage')->nullable();
             $table->timestamps();
