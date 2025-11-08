@@ -2,6 +2,8 @@
 
 namespace Database\Seeders;
 
+use App\Models\ApiTest;
+use App\Models\ApiTestResult;
 use App\Models\Query;
 use App\Models\User;
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
@@ -50,5 +52,8 @@ class DatabaseSeeder extends Seeder
             ]);
         }
 
+        ApiTest::factory(10)
+            ->has(ApiTestResult::factory()->count(10), 'results')
+            ->create();
     }
 }

@@ -14,12 +14,13 @@ class QueryPresetFactory extends Factory
     public function definition(): array
     {
         return [
+            'name' => $this->faker->numerify('Preset #'),
             'rest_query' => $this->faker->url(),
             'graphql_query' => $this->faker->url(),
             'created_at' => Carbon::now(),
             'updated_at' => Carbon::now(),
 
-            'query_id' => Query::inRandomOrder()->first() ?? Query::factory(),
+            'query_id' => Query::inRandomOrder()?->first() ?? Query::factory(),
         ];
     }
 }
