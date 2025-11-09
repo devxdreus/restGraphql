@@ -71,10 +71,10 @@ class ResultsRelationManager extends RelationManager
                     ->label('API')
                     ->badge()
                     ->searchable(),
-                TextColumn::make('request_type')
-                    ->label('Request')
-                    ->badge()
-                    ->searchable(),
+//                TextColumn::make('request_type')
+//                    ->label('Request')
+//                    ->badge()
+//                    ->searchable(),
                 TextColumn::make('status')
                     ->badge()
                     ->sortable()

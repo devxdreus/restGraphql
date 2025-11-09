@@ -10,6 +10,7 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
@@ -73,7 +74,8 @@ class ApiTestResource extends Resource
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                ViewAction::make(),
+//                EditAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
@@ -87,7 +89,8 @@ class ApiTestResource extends Resource
     {
         return [
             'index' => Pages\ListApiTests::route('/'),
-            'create' => Pages\CreateApiTest::route('/create'),
+//            'create' => Pages\CreateApiTest::route('/create'),
+            'view' => Pages\ViewApiTest::route('/{record}'),
             'edit' => Pages\EditApiTest::route('/{record}/edit'),
         ];
     }
