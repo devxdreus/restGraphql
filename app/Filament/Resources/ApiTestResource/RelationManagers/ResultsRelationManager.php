@@ -39,7 +39,7 @@ class ResultsRelationManager extends RelationManager
                 Select::make('api_type')
                     ->options(ApiType::class)
                     ->required(),
-                Select::make('request_method')
+                Select::make('request_type')
                     ->options(ApiType::class)
                     ->required(),
                 TextInput::make('payload')
