@@ -32,11 +32,6 @@ USER root
 RUN docker-php-serversideup-set-id www-data $USER_ID:$GROUP_ID  && \
     docker-php-serversideup-set-file-permissions --owner $USER_ID:$GROUP_ID --service nginx
 
-# Copy project files and set permissions
-COPY --chown=www-data:www-data . /var/www/html/
-RUN chmod -R 755 /var/www/html && \
-    chown -R www-data:www-data /var/www/html
-
 # Drop privileges back to www-data
 USER www-data
 
