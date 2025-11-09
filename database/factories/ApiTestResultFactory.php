@@ -35,23 +35,35 @@ class ApiTestResultFactory extends Factory
         ];
     }
 
-    public function responseTime(int $type): Factory
+    public function type(int $time, int $cpu, int $mem): Factory
     {
-        return $this->state(function (array $attributes) use ($type) {
-            if ($type == 1) {
-                $time = $this->faker->numberBetween(500, 700);
-            }
-            if ($type == 2) {
-                $time = $this->faker->numberBetween(700, 900);
-            }
-            if ($type == 3) {
-                $time = $this->faker->numberBetween(900, 1100);
-            }
-            if ($type < 1 || $type > 3) {
+        return $this->state(function (array $attributes) use ($time, $cpu, $mem) {
+            $ranges = [
+                'time' => [
+                    1 => [500, 700],
+                    2 => [700, 900],
+                    3 => [900, 1100]
+                ],
+                'cpu' => [
+                    1 => [10, 20],
+                    2 => [20, 30],
+                    3 => [30, 40]
+                ],
+                'mem' => [
+                    1 => [10, 20],
+                    2 => [20, 30],
+                    3 => [30, 40]
+                ]
+            ];
+
+            if ($time < 1 || $time > 3 || $cpu < 1 || $cpu > 3 || $mem < 1 || $mem > 3) {
                 throw new \Exception('Invalid type');
             }
+
             return [
-                'response_time' => $time,
+                'response_time' => $this->faker->numberBetween(...$ranges['time'][$time]),
+                'cpu_usage' => $this->faker->randomFloat(2, ...$ranges['cpu'][$cpu]),
+                'mem_usage' => $this->faker->randomFloat(2, ...$ranges['mem'][$mem])
             ];
         });
     }

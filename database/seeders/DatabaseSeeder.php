@@ -64,9 +64,11 @@ class DatabaseSeeder extends Seeder
 
                     // each query will have 3 results for each api type
                     $time = rand(1, 3);
+                    $cpu = rand(1, 3);
+                    $mem = rand(1, 3);
                     for ($j = 1; $j <= 10; $j++) {
                         ApiTestResult::factory()
-                            ->responseTime($time)
+                            ->type($time, $cpu, $mem)
                             ->create([
                                 'api_test_id' => $test->id,
                                 'status' => ApiStatusType::Success,
@@ -77,9 +79,11 @@ class DatabaseSeeder extends Seeder
                             ]);
                     }
                     $time = rand(1, 3);
+                    $cpu = rand(1, 3);
+                    $mem = rand(1, 3);
                     for ($j = 1; $j <= 10; $j++) {
                         ApiTestResult::factory()
-                            ->responseTime($time)
+                            ->type($time, $cpu, $mem)
                             ->create([
                                 'api_test_id' => $test->id,
                                 'status' => ApiStatusType::Success,
@@ -90,10 +94,12 @@ class DatabaseSeeder extends Seeder
                             ]);
                     }
                     $time = rand(1, 3);
+                    $cpu = rand(1, 3);
+                    $mem = rand(1, 3);
                     $useRest = rand(0, 1);
                     for ($j = 1; $j <= 10; $j++) {
                         ApiTestResult::factory()
-                            ->responseTime($time)
+                            ->type($time, $cpu, $mem)
                             ->create([
                                 'api_test_id' => $test->id,
                                 'status' => ApiStatusType::Success,
