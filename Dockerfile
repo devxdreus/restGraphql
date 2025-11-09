@@ -32,6 +32,11 @@ USER root
 RUN docker-php-serversideup-set-id www-data $USER_ID:$GROUP_ID  && \
     docker-php-serversideup-set-file-permissions --owner $USER_ID:$GROUP_ID --service nginx
 
+# Copy project files and set permissions
+COPY --chown=www-data:www-data . /var/www/html/
+RUN chmod -R 755 /var/www/html && \
+    chown -R www-data:www-data /var/www/html
+
 # Drop privileges back to www-data
 USER www-data
 
@@ -54,7 +59,7 @@ FROM base AS deploy
 COPY --chown=www-data:www-data . /var/www/html
 
 # Create the SQLite directory and set the owner to www-data (remove this if you're not using SQLite)
-RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
-    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
+#RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
+#    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
 
 USER www-data
