@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApiTestResource\Pages;
 use App\Filament\Resources\ApiTestResource\RelationManagers\ResultsRelationManager;
+use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeChart;
 use App\Models\ApiTest;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -99,6 +100,13 @@ class ApiTestResource extends Resource
     {
         return [
             ResultsRelationManager::class,
+        ];
+    }
+
+    public static function getWidgets(): array
+    {
+        return [
+            ResponseTimeChart::class,
         ];
     }
 

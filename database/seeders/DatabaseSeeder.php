@@ -54,7 +54,7 @@ class DatabaseSeeder extends Seeder
 //            ->create();
 
         // this will generate all succeeded tests
-        ApiTest::factory(10)
+        ApiTest::factory(5)
             ->create([
                 'status' => ApiStatusType::Success
             ])
@@ -63,36 +63,45 @@ class DatabaseSeeder extends Seeder
                 for ($q = 1; $q <= 3; $q++) {
 
                     // each query will have 3 results for each api type
-                    for ($j = 1; $j <= 3; $j++) {
-                        ApiTestResult::factory()->create([
-                            'api_test_id' => $test->id,
-                            'status' => ApiStatusType::Success,
-                            'api_type' => ApiType::Rest,
-                            'request_type' => ApiType::Rest,
-                            'query_id' => Query::find($q),
-                            'preset_id' => Query::find($q)->activePreset
-                        ]);
+                    $time = rand(1, 3);
+                    for ($j = 1; $j <= 10; $j++) {
+                        ApiTestResult::factory()
+                            ->responseTime($time)
+                            ->create([
+                                'api_test_id' => $test->id,
+                                'status' => ApiStatusType::Success,
+                                'api_type' => ApiType::Rest,
+                                'request_type' => ApiType::Rest,
+                                'query_id' => Query::find($q),
+                                'preset_id' => Query::find($q)->activePreset
+                            ]);
                     }
-                    for ($j = 1; $j <= 3; $j++) {
-                        ApiTestResult::factory()->create([
-                            'api_test_id' => $test->id,
-                            'status' => ApiStatusType::Success,
-                            'api_type' => ApiType::Graphql,
-                            'request_type' => ApiType::Graphql,
-                            'query_id' => Query::find($q),
-                            'preset_id' => Query::find($q)->activePreset
-                        ]);
+                    $time = rand(1, 3);
+                    for ($j = 1; $j <= 10; $j++) {
+                        ApiTestResult::factory()
+                            ->responseTime($time)
+                            ->create([
+                                'api_test_id' => $test->id,
+                                'status' => ApiStatusType::Success,
+                                'api_type' => ApiType::Graphql,
+                                'request_type' => ApiType::Graphql,
+                                'query_id' => Query::find($q),
+                                'preset_id' => Query::find($q)->activePreset
+                            ]);
                     }
+                    $time = rand(1, 3);
                     $useRest = rand(0, 1);
-                    for ($j = 1; $j <= 3; $j++) {
-                        ApiTestResult::factory()->create([
-                            'api_test_id' => $test->id,
-                            'status' => ApiStatusType::Success,
-                            'api_type' => ApiType::Integrated,
-                            'request_type' => $useRest ? ApiType::Rest : ApiType::Graphql,
-                            'query_id' => Query::find($q),
-                            'preset_id' => Query::find($q)->activePreset
-                        ]);
+                    for ($j = 1; $j <= 10; $j++) {
+                        ApiTestResult::factory()
+                            ->responseTime($time)
+                            ->create([
+                                'api_test_id' => $test->id,
+                                'status' => ApiStatusType::Success,
+                                'api_type' => ApiType::Integrated,
+                                'request_type' => $useRest ? ApiType::Rest : ApiType::Graphql,
+                                'query_id' => Query::find($q),
+                                'preset_id' => Query::find($q)->activePreset
+                            ]);
                     }
 
                 }
