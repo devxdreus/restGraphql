@@ -3,9 +3,9 @@
 namespace App\Filament\Resources\ApiTestResource\Pages;
 
 use App\Filament\Resources\ApiTestResource;
-use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageChart;
-use App\Filament\Resources\ApiTestResource\Widgets\MemUsageChart;
-use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeChart;
+use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\MemUsageByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeByQueryChart;
 use App\Models\Query;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -27,9 +27,9 @@ class ViewApiTest extends ViewRecord
     protected function getHeaderWidgets(): array
     {
         return [
-            ResponseTimeChart::class,
-            CpuUsageChart::class,
-            MemUsageChart::class,
+            ResponseTimeByQueryChart::class,
+            CpuUsageByQueryChart::class,
+            MemUsageByQueryChart::class,
         ];
     }
 }

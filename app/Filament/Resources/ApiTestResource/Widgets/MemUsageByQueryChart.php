@@ -6,22 +6,17 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class MemUsageChart extends ChartWidget
+class MemUsageByQueryChart extends ChartWidget
 {
     protected ?string $heading = 'Mem Usage Chart';
 
     public ?ApiTest $record = null;
 
-    public ?string $filter = 'all';
+    public ?string $filter = '1';
 
     protected function getData(): array
     {
-        if ($this->filter !== 'all') {
-            $record = $this->record->results()->success()->where('query_id', $this->filter);
-        } else {
-            $record = $this->record->results()->success();
-        }
-
+        $record = $this->record->results()->success()->where('query_id', $this->filter);
         $rest = $record->clone()->rest()->pluck('mem_usage');
         $graphql = $record->clone()->graphql()->pluck('mem_usage');
         $integrated = $record->clone()->integrated()->pluck('mem_usage');
@@ -59,9 +54,7 @@ class MemUsageChart extends ChartWidget
 
     protected function getFilters(): ?array
     {
-        $filter = ['all' => 'All'];
-        $filter += Query::all()->pluck('name', 'id')->toArray();
-        return $filter;
+        return Query::all()->pluck('name', 'id')->toArray();
     }
 
     protected function getType(): string

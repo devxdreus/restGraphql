@@ -4,7 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\ApiTestResource\Pages;
 use App\Filament\Resources\ApiTestResource\RelationManagers\ResultsRelationManager;
-use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeChart;
+use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeByQueryChart;
 use App\Models\ApiTest;
 use BackedEnum;
 use Filament\Actions\BulkActionGroup;
@@ -106,7 +106,7 @@ class ApiTestResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            ResponseTimeChart::class,
+            ResponseTimeByQueryChart::class,
         ];
     }
 

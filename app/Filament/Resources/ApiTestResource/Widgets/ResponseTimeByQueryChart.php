@@ -2,29 +2,26 @@
 
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
+use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\Query;
+use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 
-class CpuUsageChart extends ChartWidget
+class ResponseTimeByQueryChart extends ChartWidget
 {
-    protected ?string $heading = 'Cpu Usage Chart';
+    protected ?string $heading = 'Response Time Chart';
 
     public ?ApiTest $record = null;
 
-    public ?string $filter = 'all';
+    public ?string $filter = '1';
 
     protected function getData(): array
     {
-        if ($this->filter !== 'all') {
-            $record = $this->record->results()->success()->where('query_id', $this->filter);
-        } else {
-            $record = $this->record->results()->success();
-        }
-
-        $rest = $record->clone()->rest()->pluck('cpu_usage');
-        $graphql = $record->clone()->graphql()->pluck('cpu_usage');
-        $integrated = $record->clone()->integrated()->pluck('cpu_usage');
+        $record = $this->record->results()->success()->where('query_id', $this->filter);
+        $rest = $record->clone()->rest()->pluck('response_time');
+        $graphql = $record->clone()->graphql()->pluck('response_time');
+        $integrated = $record->clone()->integrated()->pluck('response_time');
 
         return [
             'datasets' => [
@@ -59,9 +56,7 @@ class CpuUsageChart extends ChartWidget
 
     protected function getFilters(): ?array
     {
-        $filter = ['all' => 'All'];
-        $filter += Query::all()->pluck('name', 'id')->toArray();
-        return $filter;
+        return Query::all()->pluck('name', 'id')->toArray();
     }
 
     protected function getType(): string
