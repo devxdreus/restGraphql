@@ -4,8 +4,11 @@ namespace App\Filament\Resources\ApiTestResource\Pages;
 
 use App\Filament\Resources\ApiTestResource;
 use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageChart;
 use App\Filament\Resources\ApiTestResource\Widgets\MemUsageByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\MemUsageChart;
 use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeChart;
 use App\Models\Query;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -28,8 +31,11 @@ class ViewApiTest extends ViewRecord
     {
         return [
             ResponseTimeByQueryChart::class,
+            ResponseTimeChart::class,
             CpuUsageByQueryChart::class,
+            CpuUsageChart::class,
             MemUsageByQueryChart::class,
+            MemUsageChart::class,
         ];
     }
 }
