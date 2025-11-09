@@ -6,10 +6,10 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class CpuUsageChart extends ChartWidget
+class CpuUsageSummaryChart extends ChartWidget
 {
     protected ?string $heading = 'Cpu Usage Chart';
-    
+
     public ?ApiTest $record = null;
 
     protected function getData(): array

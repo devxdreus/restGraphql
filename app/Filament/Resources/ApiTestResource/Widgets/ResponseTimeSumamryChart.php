@@ -6,18 +6,18 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class MemUsageChart extends ChartWidget
+class ResponseTimeSumamryChart extends ChartWidget
 {
-    protected ?string $heading = 'Mem Usage Chart';
+    protected ?string $heading = 'Response Time Chart';
 
     public ?ApiTest $record = null;
 
     protected function getData(): array
     {
         $record = $this->record->results()->success()->groupBy('query_id');
-        $rest = $record->clone()->rest()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');
-        $graphql = $record->clone()->graphql()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');
-        $integrated = $record->clone()->integrated()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');
+        $rest = $record->clone()->rest()->selectRaw('ROUND(AVG(response_time), 2) as avg_response_time')->pluck('avg_response_time');
+        $graphql = $record->clone()->graphql()->selectRaw('ROUND(AVG(response_time), 2) as avg_response_time')->pluck('avg_response_time');
+        $integrated = $record->clone()->integrated()->selectRaw('ROUND(AVG(response_time), 2) as avg_response_time')->pluck('avg_response_time');
 
         $qIds = $record->clone()->pluck('query_id');
         $labels = Query::whereIn('id', $qIds)->pluck('name');
