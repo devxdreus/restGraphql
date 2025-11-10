@@ -2,7 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Widgets\AvgCpuUsageByQueryChart;
+use App\Filament\Widgets\AvgMemUsageByQueryChart;
 use App\Filament\Widgets\AvgResponseTimeByQueryChart;
+use App\Filament\Widgets\CpuUsageByTestChart;
+use App\Filament\Widgets\MemUsageByTestChart;
 use App\Filament\Widgets\ResponseTimeByTestChart;
 use App\Models\Query;
 use Filament\Forms\Components\Select;
@@ -36,6 +40,10 @@ class Dashboard extends BaseDashboard
         return [
             ResponseTimeByTestChart::class,
             AvgResponseTimeByQueryChart::class,
+            CpuUsageByTestChart::class,
+            AvgCpuUsageByQueryChart::class,
+            MemUsageByTestChart::class,
+            AvgMemUsageByQueryChart::class,
         ];
     }
 }
