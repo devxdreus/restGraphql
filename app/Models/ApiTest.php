@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApiStatusType;
+use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -31,6 +32,21 @@ class ApiTest extends Model
                     null;
             }
         );
+    }
+
+    public function average(string $column): float
+    {
+        return $this->results()->avg($column);
+    }
+
+    public function averageByColumnAndApiType(string $column, string $apiType): float
+    {
+        return $this->results()->where('api_type', $apiType)->avg($column);
+    }
+
+    public function averageByApiTypeAndQueryType(string $column, string $apiType, string $queryType): float
+    {
+        return $this->results()->where('api_type', $apiType)->where('query_type', $queryType)->avg($column);
     }
 
     public function results(): HasMany

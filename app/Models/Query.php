@@ -22,4 +22,24 @@ class Query extends Model
     {
         return $this->hasMany(QueryPreset::class, 'query_id');
     }
+
+    public function testResults(): HasMany
+    {
+        return $this->hasMany(ApiTestResult::class, 'query_id');
+    }
+
+    public function average(string $column): float
+    {
+        return $this->testResults()->avg($column);
+    }
+
+    public function averageByColumnAndApiType(string $column, string $apiType): float
+    {
+        return $this->testResults()->where('api_type', $apiType)->avg($column);
+    }
+
+    public function averageByApiTypeAndQueryType(string $column, string $apiType, string $queryType): float
+    {
+        return $this->testResults()->where('api_type', $apiType)->where('query_type', $queryType)->avg($column);
+    }
 }
