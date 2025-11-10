@@ -21,7 +21,7 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $data = [];
-        for ($i = 1; $i <= 3; $i++) {
+        for ($i = 1; $i <= 14; $i++) {
             $data[] = [
                 'name' => "Q$i",
                 'description' => "Query $i",
@@ -54,15 +54,14 @@ class DatabaseSeeder extends Seeder
 //            ->create();
 
         // this will generate all succeeded tests
-        ApiTest::factory(5)
+        ApiTest::factory(10)
             ->create([
                 'status' => ApiStatusType::Success
             ])
             ->map(function ($test) {
                 // for 3 queries
-                for ($q = 1; $q <= 3; $q++) {
+                for ($q = 1; $q <= 14; $q++) {
 
-                    // each query will have 3 results for each api type
                     $time = rand(1, 3);
                     $cpu = rand(1, 3);
                     $mem = rand(1, 3);
