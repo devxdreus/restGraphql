@@ -12,7 +12,7 @@ return new class extends Migration {
             $table->foreignId('query_id');
             $table->string('name');
             $table->string('rest_query');
-            $table->string('graphql_query');
+            $table->text('graphql_query');
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(false);
             $table->timestamps();

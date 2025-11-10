@@ -10,6 +10,8 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\DissociateAction;
 use Filament\Actions\DissociateBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\CodeEditor;
+use Filament\Forms\Components\CodeEditor\Enums\Language;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
@@ -33,8 +35,9 @@ class PresetsRelationManager extends RelationManager
                 Textarea::make('rest_query')
                     ->required()
                     ->columnSpanFull(),
-                Textarea::make('graphql_query')
+                CodeEditor::make('graphql_query')
                     ->required()
+                    ->language(Language::Cpp)
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->required(),
@@ -49,9 +52,11 @@ class PresetsRelationManager extends RelationManager
                 TextColumn::make('name')
                     ->searchable(),
                 TextColumn::make('rest_query')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(30),
                 TextColumn::make('graphql_query')
-                    ->searchable(),
+                    ->searchable()
+                    ->limit(30),
                 IconColumn::make('is_active')
                     ->boolean(),
                 TextColumn::make('created_at')
@@ -72,7 +77,6 @@ class PresetsRelationManager extends RelationManager
             ])
             ->recordActions([
                 EditAction::make(),
-                DissociateAction::make(),
                 DeleteAction::make(),
             ])
             ->toolbarActions([
