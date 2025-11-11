@@ -32,10 +32,10 @@ class ViewApiTest extends ViewRecord
         return [
             ResponseTimeByQueryChart::class,
             ResponseTimeSumamryChart::class,
-            CpuUsageByQueryChart::class,
-            CpuUsageSummaryChart::class,
             MemUsageByQueryChart::class,
             MemUsageSummaryChart::class,
+            CpuUsageByQueryChart::class,
+            CpuUsageSummaryChart::class,
         ];
     }
 }

@@ -14,7 +14,7 @@ class CpuUsageSummaryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->groupBy('query_id');
+        $record = $this->record->results()->success()->groupBy('query_id')->orderBy('query_id');
         $rest = $record->clone()->rest()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');
         $graphql = $record->clone()->graphql()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');
         $integrated = $record->clone()->integrated()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');

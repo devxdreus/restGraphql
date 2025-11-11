@@ -18,7 +18,7 @@ class ResponseTimeByQueryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->where('query_id', $this->filter);
+        $record = $this->record->results()->success()->orderBy('created_at')->where('query_id', $this->filter);
         $rest = $record->clone()->rest()->pluck('response_time');
         $graphql = $record->clone()->graphql()->pluck('response_time');
         $integrated = $record->clone()->integrated()->pluck('response_time');

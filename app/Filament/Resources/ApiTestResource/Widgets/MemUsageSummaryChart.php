@@ -14,7 +14,7 @@ class MemUsageSummaryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->groupBy('query_id');
+        $record = $this->record->results()->success()->groupBy('query_id')->orderBy('query_id');
         $rest = $record->clone()->rest()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');
         $graphql = $record->clone()->graphql()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');
         $integrated = $record->clone()->integrated()->selectRaw('ROUND(AVG(mem_usage), 2) as avg_mem_usage')->pluck('avg_mem_usage');

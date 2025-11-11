@@ -62,15 +62,16 @@ class ApiTestResource extends Resource
                 TextColumn::make('status')
                     ->badge(),
 
-                TextColumn::make('duration')
-                    ->formatStateUsing(fn($state) => $state . ' seconds'),
-
                 TextColumn::make('created_at')
                     ->dateTime(),
 
                 TextColumn::make('completed_at')
                     ->dateTime(),
+
+                TextColumn::make('duration')
+                    ->formatStateUsing(fn($state) => $state . ' seconds'),
             ])
+            ->defaultSort('created_at', 'desc')
             ->filters([
                 //
             ])

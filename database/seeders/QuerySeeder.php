@@ -126,7 +126,11 @@ class QuerySeeder extends Seeder
                 'graphql_query' => 'query {
     repository(owner: "facebook", name: "react") {
         issue(number: 1) {
-            comments(first: 100) { nodes { body } }
+            comments(first: 100) {
+                nodes {
+                    body
+                }
+            }
         }
     }
 }
@@ -237,7 +241,11 @@ class QuerySeeder extends Seeder
     repository(owner: "facebook", name: "react") {
         issue(number: 2) {
             title
-            comments(first: 100) { nodes { body } }
+            comments(first: 100) {
+                nodes {
+                    body
+                }
+            }
         }
     }
 }

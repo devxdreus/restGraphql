@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             QuerySeeder::class,
-            ApiTestSeeder::class,
+//            ApiTestSeeder::class,
         ]);
     }
 }

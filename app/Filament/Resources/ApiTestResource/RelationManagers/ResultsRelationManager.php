@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ApiTestResource\RelationManagers;
 
+use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use Filament\Actions\AssociateAction;
 use Filament\Actions\BulkActionGroup;
@@ -18,7 +19,9 @@ use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Support\Number;
 
 class ResultsRelationManager extends RelationManager
 {
@@ -42,7 +45,7 @@ class ResultsRelationManager extends RelationManager
                 Select::make('request_type')
                     ->options(ApiType::class)
                     ->required(),
-                TextInput::make('payload')
+                TextInput::make('payload_size')
                     ->required()
                     ->numeric(),
                 TextInput::make('cpu_usage')
@@ -66,20 +69,23 @@ class ResultsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('queryModel.name')
                     ->label('Query')
-                    ->sortable(),
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('api_type')
                     ->label('API')
                     ->badge()
+                    ->sortable()
                     ->searchable(),
-//                TextColumn::make('request_type')
-//                    ->label('Request')
-//                    ->badge()
-//                    ->searchable(),
+                TextColumn::make('request_type')
+                    ->label('Request')
+                    ->badge()
+                    ->sortable()
+                    ->searchable(),
                 TextColumn::make('status')
                     ->badge()
                     ->sortable()
                     ->searchable(),
-                TextColumn::make('payload')
+                TextColumn::make('payload_size')
                     ->numeric(locale: 'id')
                     ->formatStateUsing(fn($state) => $state . ' bytes')
                     ->sortable(),
@@ -87,11 +93,11 @@ class ResultsRelationManager extends RelationManager
                     ->numeric(locale: 'id')
                     ->formatStateUsing(fn($state) => $state . 'ms')
                     ->sortable(),
-                TextColumn::make('cpu_usage')
-                    ->numeric(locale: 'id')
-                    ->formatStateUsing(fn($state) => $state . '%')
-                    ->sortable(),
                 TextColumn::make('mem_usage')
+                    ->numeric(locale: 'id')
+                    ->formatStateUsing(fn($state) => Number::format($state) . ' bytes')
+                    ->sortable(),
+                TextColumn::make('cpu_usage')
                     ->numeric(locale: 'id')
                     ->formatStateUsing(fn($state) => $state . '%')
                     ->sortable(),
@@ -104,8 +110,25 @@ class ResultsRelationManager extends RelationManager
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
+            ->poll('3s')
+            ->defaultSort('created_at', 'desc')
             ->filters([
-                //
+                SelectFilter::make('query_id')
+                    ->label('Query')
+                    ->relationship('queryModel', 'name')
+                    ->multiple()
+                    ->preload()
+                    ->searchable(),
+                SelectFilter::make('api_type')
+                    ->label('API Type')
+                    ->options(ApiType::class)
+                    ->multiple()
+                    ->searchable(),
+                SelectFilter::make('status')
+                    ->label('Status')
+                    ->options(ApiStatusType::class)
+                    ->multiple()
+                    ->searchable(),
             ])
             ->headerActions([
 //                CreateAction::make(),

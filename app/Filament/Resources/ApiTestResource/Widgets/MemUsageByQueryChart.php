@@ -16,7 +16,7 @@ class MemUsageByQueryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->where('query_id', $this->filter);
+        $record = $this->record->results()->success()->orderBy('created_at')->where('query_id', $this->filter);
         $rest = $record->clone()->rest()->pluck('mem_usage');
         $graphql = $record->clone()->graphql()->pluck('mem_usage');
         $integrated = $record->clone()->integrated()->pluck('mem_usage');

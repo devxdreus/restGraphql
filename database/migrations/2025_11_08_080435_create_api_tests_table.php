@@ -11,7 +11,7 @@ return new class extends Migration {
         Schema::create('api_tests', function (Blueprint $table) {
             $table->id();
             $table->string('count');
-            $table->enum('status', ApiStatusType::values());
+            $table->enum('status', ApiStatusType::values())->default(ApiStatusType::Processing->value);
             $table->dateTime('completed_at')->nullable();
             $table->timestamps();
         });
