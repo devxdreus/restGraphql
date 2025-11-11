@@ -21,12 +21,14 @@ class CpuUsageSummaryChart extends ChartWidget
         $data = [];
         foreach ($apiTypes as $apiType) {
             foreach ($queries as $query) {
-                $data[$apiType][] = (int)$query->testResults()
-                    ->success()
-                    ->where('api_test_id', $this->record->id)
-                    ->where('api_type', $apiType)
-                    ->orderBy('query_id')
-                    ->avg('cpu_usage');
+                $data[$apiType][] = number_format(
+                    $query->testResults()
+                        ->success()
+                        ->where('api_test_id', $this->record->id)
+                        ->where('api_type', $apiType)
+                        ->orderBy('query_id')
+                        ->avg('cpu_usage'),
+                    2);
             }
         }
 

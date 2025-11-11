@@ -108,16 +108,20 @@ class RunApiTest extends Command
         try {
             $startTime = microtime(true);
             $memoryBefore = memory_get_usage();
+            $cpuBefore = $this->getCpuTime();
 
             $response = Http::withToken($this->token)
                 ->get($this->restUrl . '/' . $query->rest_query);
 
             $memoryAfter = memory_get_usage();
+            $cpuAfter = $this->getCpuTime();
             $endTime = microtime(true);
 
             $responseTime = round(($endTime - $startTime) * 1000);
             $payloadSize = strlen($response->body());
             $memoryUsage = $memoryAfter - $memoryBefore;
+            $cpuTime = $cpuAfter - $cpuBefore; // in microseconds
+            $cpuUsage = $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0;
 
             if ($response->failed()) {
                 $this->error('REST API Request Failed');
@@ -135,12 +139,15 @@ class RunApiTest extends Command
             $this->line("REST - Response time: {$responseTime}ms");
             $this->line("REST - Payload size: {$payloadSize} bytes");
             $this->line("REST - Memory usage: {$memoryUsage} bytes");
+            $this->line("REST - CPU time: {$cpuTime}μs");
+            $this->line("REST - CPU usage: {$cpuUsage}%");
 
             $data = [
                 'status' => ApiStatusType::Success,
                 'response_time' => $responseTime,
                 'payload_size' => $payloadSize,
                 'mem_usage' => $memoryUsage,
+                'cpu_usage' => $cpuUsage,
             ];
 
             Cache::put("api_query_{$query->query_id}_preset_{$query->id}_rest", $data);
@@ -167,16 +174,20 @@ class RunApiTest extends Command
         try {
             $startTime = microtime(true);
             $memoryBefore = memory_get_usage();
+            $cpuBefore = $this->getCpuTime();
 
             $response = Http::withToken($this->token)
                 ->post($this->graphqlUrl, ['query' => $query->graphql_query]);
 
             $memoryAfter = memory_get_usage();
+            $cpuAfter = $this->getCpuTime();
             $endTime = microtime(true);
 
             $responseTime = round(($endTime - $startTime) * 1000);
             $payloadSize = strlen($response->body());
             $memoryUsage = $memoryAfter - $memoryBefore;
+            $cpuTime = $cpuAfter - $cpuBefore; // in microseconds
+            $cpuUsage = $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0;
 
             if ($response->failed() || isset($response['errors'])) {
                 $this->error('GraphQL API Request Failed');
@@ -194,12 +205,15 @@ class RunApiTest extends Command
             $this->line("GraphQL - Response time: {$responseTime}ms");
             $this->line("GraphQL - Payload size: {$payloadSize} bytes");
             $this->line("GraphQL - Memory usage: {$memoryUsage} bytes");
+            $this->line("GraphQL - CPU time: {$cpuTime}μs");
+            $this->line("GraphQL - CPU usage: {$cpuUsage}%");
 
             $data = [
                 'status' => ApiStatusType::Success,
                 'response_time' => $responseTime,
                 'payload_size' => $payloadSize,
                 'mem_usage' => $memoryUsage,
+                'cpu_usage' => $cpuUsage,
             ];
 
             Cache::put("api_query_{$query->query_id}_preset_{$query->id}_graphql", $data);
@@ -282,19 +296,18 @@ class RunApiTest extends Command
         $weight = [
             'response_time' => 0.5,
             'payload_size' => 0.2,
-            'mem_usage' => 0.3,
+            'mem_usage' => 0.2,
+            'cpu_usage' => 0.1,
         ];
 
         // build min max accross all metric
-        $metric = ['response_time', 'payload_size', 'mem_usage'];
+        $metric = ['response_time', 'payload_size', 'mem_usage', 'cpu_usage'];
         $mins = [];
         $maxs = [];
 
         foreach ($metric as $m) {
             $min = $query->testResults()->success()->min($m);
             $max = $query->testResults()->success()->max($m);
-
-            $this->warn("$m - min: {$min} max: {$max}");
 
             if ($min === $max) { // avoid division by zero; neutral band
                 $min -= 1.0;
@@ -318,27 +331,36 @@ class RunApiTest extends Command
         $norm_rest = $norm($rest);
         $norm_graphql = $norm($graphql);
 
-        $this->warn('Rest norm: ' . json_encode($norm_rest));
-        $this->warn('GraphQL norm: ' . json_encode($norm_graphql));
-
         $score = function (array $xN) use ($weight): float {
             return
                 $weight['response_time'] * $xN['response_time'] +
                 $weight['payload_size'] * $xN['payload_size'] +
-                $weight['mem_usage'] * $xN['mem_usage'];
+                $weight['mem_usage'] * $xN['mem_usage'] +
+                $weight['cpu_usage'] * $xN['cpu_usage'];
         };
 
         $score_rest = $score($norm_rest);
         $score_graphql = $score($norm_graphql);
 
-        $this->warn("Score: rest $score_rest, graphql $score_graphql");;
-
         if (abs($score_rest - $score_graphql) < 1e-9) {
-            $winner = ($a['payload_size'] ?? INF) <= ($b['payload_size'] ?? INF) ? ApiType::Rest : ApiType::Graphql;
+            $winner = ($rest['payload_size'] ?? INF) <= ($graphql['payload_size'] ?? INF) ? ApiType::Rest : ApiType::Graphql;
         } else {
             $winner = ($score_rest < $score_graphql) ? ApiType::Rest : ApiType::Graphql;
         }
 
         return $winner;
+    }
+
+    private function getCpuTime(): int
+    {
+        $usage = getrusage();
+
+        // User CPU time: waktu CPU untuk kode aplikasi
+        $userTime = ($usage['ru_utime.tv_sec'] * 1000000) + $usage['ru_utime.tv_usec'];
+
+        // System CPU time: waktu CPU untuk system calls
+        $systemTime = ($usage['ru_stime.tv_sec'] * 1000000) + $usage['ru_stime.tv_usec'];
+
+        return $userTime + $systemTime;
     }
 }
