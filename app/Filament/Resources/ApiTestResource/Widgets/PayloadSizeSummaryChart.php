@@ -7,9 +7,9 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class ResponseTimeSumamryChart extends ChartWidget
+class PayloadSizeSummaryChart extends ChartWidget
 {
-    protected ?string $heading = 'Response Time Chart';
+    protected ?string $heading = 'Payload Size Summary Chart';
 
     public ?ApiTest $record = null;
 
@@ -26,20 +26,9 @@ class ResponseTimeSumamryChart extends ChartWidget
                     ->where('api_test_id', $this->record->id)
                     ->where('api_type', $apiType)
                     ->orderBy('query_id')
-                    ->avg('response_time');
+                    ->avg('payload_size');
             }
         }
-
-        $record = $this->record->results()->success()
-            ->selectRaw('query_id, ROUND(AVG(response_time)) as avg_response_time')
-            ->groupBy('query_id')
-            ->orderBy('query_id');
-        $rest = $record->clone()->rest()->pluck('avg_response_time');
-        $graphql = $record->clone()->graphql()->pluck('avg_response_time');
-        $integrated = $record->clone()->integrated()->pluck('avg_response_time');
-
-        $qIds = $record->clone()->pluck('query_id');
-        $labels = Query::whereIn('id', $qIds)->pluck('name');
 
         return [
             'labels' => $queries->pluck('name'),

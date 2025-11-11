@@ -21,6 +21,8 @@ class CpuUsageByQueryChart extends ChartWidget
         $graphql = $record->clone()->graphql()->pluck('cpu_usage');
         $integrated = $record->clone()->integrated()->pluck('cpu_usage');
 
+        $labels = range(1, $rest->count());
+
         return [
             'datasets' => [
                 [
@@ -48,7 +50,7 @@ class CpuUsageByQueryChart extends ChartWidget
                     'tension' => 0.3,
                 ]
             ],
-            'labels' => $rest->keys()->toArray(),
+            'labels' => $labels,
         ];
     }
 

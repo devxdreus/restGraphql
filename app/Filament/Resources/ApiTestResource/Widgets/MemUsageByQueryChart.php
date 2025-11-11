@@ -21,6 +21,8 @@ class MemUsageByQueryChart extends ChartWidget
         $graphql = $record->clone()->graphql()->pluck('mem_usage');
         $integrated = $record->clone()->integrated()->pluck('mem_usage');
 
+        $labels = range(1, $rest->count());
+
         return [
             'datasets' => [
                 [
@@ -48,7 +50,7 @@ class MemUsageByQueryChart extends ChartWidget
                     'tension' => 0.3,
                 ]
             ],
-            'labels' => $rest->keys()->toArray(),
+            'labels' => $labels,
         ];
     }
 

@@ -2,15 +2,13 @@
 
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
-use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\Query;
-use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 
-class ResponseTimeByQueryChart extends ChartWidget
+class PayloadSizeByQueryChart extends ChartWidget
 {
-    protected ?string $heading = 'Response Time Chart';
+    protected ?string $heading = 'Payload Size By Query Chart';
 
     public ?ApiTest $record = null;
 
@@ -18,10 +16,12 @@ class ResponseTimeByQueryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->orderBy('created_at')->where('query_id', $this->filter);
-        $rest = $record->clone()->rest()->pluck('response_time');
-        $graphql = $record->clone()->graphql()->pluck('response_time');
-        $integrated = $record->clone()->integrated()->pluck('response_time');
+        $record = $this->record->results()->success()
+            ->orderBy('created_at')
+            ->where('query_id', $this->filter);
+        $rest = $record->clone()->rest()->pluck('payload_size');
+        $graphql = $record->clone()->graphql()->pluck('payload_size');
+        $integrated = $record->clone()->integrated()->pluck('payload_size');
 
         $labels = range(1, $rest->count());
 

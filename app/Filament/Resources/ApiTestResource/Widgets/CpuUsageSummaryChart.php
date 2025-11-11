@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
+use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
@@ -14,34 +15,41 @@ class CpuUsageSummaryChart extends ChartWidget
 
     protected function getData(): array
     {
-        $record = $this->record->results()->success()->groupBy('query_id')->orderBy('query_id');
-        $rest = $record->clone()->rest()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');
-        $graphql = $record->clone()->graphql()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');
-        $integrated = $record->clone()->integrated()->selectRaw('ROUND(AVG(cpu_usage), 2) as avg_cpu_usage')->pluck('avg_cpu_usage');
+        $queries = Query::all();
+        $apiTypes = ApiType::values();
 
-        $qIds = $record->clone()->pluck('query_id');
-        $labels = Query::whereIn('id', $qIds)->pluck('name');
+        $data = [];
+        foreach ($apiTypes as $apiType) {
+            foreach ($queries as $query) {
+                $data[$apiType][] = (int)$query->testResults()
+                    ->success()
+                    ->where('api_test_id', $this->record->id)
+                    ->where('api_type', $apiType)
+                    ->orderBy('query_id')
+                    ->avg('cpu_usage');
+            }
+        }
 
         return [
-            'labels' => $labels,
+            'labels' => $queries->pluck('name'),
             'datasets' => [
                 [
                     'label' => 'Rest',
-                    'data' => $rest,
+                    'data' => $data[ApiType::Rest->value],
                     'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
                     'borderColor' => 'rgba(75, 192, 192, 1)',
                     'borderWidth' => 1,
                 ],
                 [
                     'label' => 'GraphQL',
-                    'data' => $graphql,
+                    'data' => $data[ApiType::Graphql->value],
                     'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
                     'borderColor' => 'rgba(255, 99, 132, 1)',
                     'borderWidth' => 1,
                 ],
                 [
                     'label' => 'Integrated',
-                    'data' => $integrated,
+                    'data' => $data[ApiType::Integrated->value],
                     'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
                     'borderColor' => 'rgba(54, 162, 235, 1)',
                     'borderWidth' => 1,
