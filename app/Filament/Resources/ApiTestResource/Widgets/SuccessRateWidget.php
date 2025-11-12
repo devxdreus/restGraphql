@@ -10,11 +10,9 @@ class SuccessRateWidget extends StatsOverviewWidget
 {
     public ?ApiTest $record = null;
 
-    public ?string $filter = '1';
-
     protected function getStats(): array
     {
-        $results = $this->record->results()->where('query_id', $this->filter);
+        $results = $this->record->results();
 
         $restTotal = $results->clone()->rest()->count();
         $restSuccess = $results->clone()->rest()->success()->count();
@@ -29,6 +27,11 @@ class SuccessRateWidget extends StatsOverviewWidget
         $integratedSuccessRate = $integratedTotal > 0 ? ($integratedSuccess / $integratedTotal) * 100 : 0;
 
         return [
+            Stat::make('Integrated Success Rate', number_format($integratedSuccessRate, 2) . '%')
+                ->description($integratedSuccess . ' / ' . $integratedTotal . ' requests')
+                ->descriptionIcon('heroicon-o-check-circle')
+                ->color($integratedSuccessRate >= 95 ? 'success' : ($integratedSuccessRate >= 80 ? 'warning' : 'danger')),
+
             Stat::make('Rest Success Rate', number_format($restSuccessRate, 2) . '%')
                 ->description($restSuccess . ' / ' . $restTotal . ' requests')
                 ->descriptionIcon('heroicon-o-check-circle')
@@ -38,11 +41,6 @@ class SuccessRateWidget extends StatsOverviewWidget
                 ->description($graphqlSuccess . ' / ' . $graphqlTotal . ' requests')
                 ->descriptionIcon('heroicon-o-check-circle')
                 ->color($graphqlSuccessRate >= 95 ? 'success' : ($graphqlSuccessRate >= 80 ? 'warning' : 'danger')),
-
-            Stat::make('Integrated Success Rate', number_format($integratedSuccessRate, 2) . '%')
-                ->description($integratedSuccess . ' / ' . $integratedTotal . ' requests')
-                ->descriptionIcon('heroicon-o-check-circle')
-                ->color($integratedSuccessRate >= 95 ? 'success' : ($integratedSuccessRate >= 80 ? 'warning' : 'danger')),
         ];
     }
 }

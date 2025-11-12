@@ -37,7 +37,7 @@ class ViewApiTest extends ViewRecord
     {
         return [
             ComparisonStatsWidget::class,
-            EfficiencyScoreWidget::class,
+//            EfficiencyScoreWidget::class,
             SuccessRateWidget::class,
 //            ResourceUtilizationRadarChart::class,
             ResponseTimeByQueryChart::class,
