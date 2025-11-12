@@ -8,9 +8,14 @@ use App\Filament\Resources\ApiTestResource\Widgets\SuccessRateWidget;
 use App\Filament\Widgets\AvgCpuUsageByQueryChart;
 use App\Filament\Widgets\AvgMemUsageByQueryChart;
 use App\Filament\Widgets\AvgResponseTimeByQueryChart;
+use App\Filament\Widgets\BestWorstQueriesWidget;
 use App\Filament\Widgets\CpuUsageByTestChart;
 use App\Filament\Widgets\MemUsageByTestChart;
+use App\Filament\Widgets\OverallSuccessRateWidget;
+use App\Filament\Widgets\PerformanceOverviewWidget;
 use App\Filament\Widgets\ResponseTimeByTestChart;
+use App\Filament\Widgets\TestActivityStatsWidget;
+use App\Filament\Widgets\TestTrendsChart;
 use App\Models\Query;
 use Filament\Forms\Components\Select;
 use Filament\Pages\Dashboard as BaseDashboard;
@@ -21,28 +26,33 @@ use Filament\Schemas\Schema;
 
 class Dashboard extends BaseDashboard
 {
-    use HasFiltersForm;
-
-    public ?string $filter = 'all';
-
-    public function filtersForm(Schema $schema): Schema
-    {
-        return $schema
-            ->components([
-                Select::make('query_id')
-                    ->label('Query')
-                    ->options(function () {
-                        return Query::pluck('name', 'id')->toArray();
-                    })
-                    ->placeholder('All')
-            ]);
-    }
+//    use HasFiltersForm;
+//
+//    public ?string $filter = 'all';
+//
+//    public function filtersForm(Schema $schema): Schema
+//    {
+//        return $schema
+//            ->components([
+//                Select::make('query_id')
+//                    ->label('Query')
+//                    ->options(function () {
+//                        return Query::pluck('name', 'id')->toArray();
+//                    })
+//                    ->placeholder('All')
+//            ]);
+//    }
 
     public function getWidgets(): array
     {
         return [
             SuccessRateWidget::class,
             ComparisonStatsWidget::class,
+//            TestActivityStatsWidget::class,
+//            OverallSuccessRateWidget::class,
+//            PerformanceOverviewWidget::class,
+//            TestTrendsChart::class,
+//            BestWorstQueriesWidget::class,
         ];
     }
 }
