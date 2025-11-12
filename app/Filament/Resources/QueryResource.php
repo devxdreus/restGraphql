@@ -24,7 +24,7 @@ class QueryResource extends Resource
 
     protected static ?string $slug = 'queries';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedCircleStack;
 
     public static function form(Schema $schema): Schema
     {

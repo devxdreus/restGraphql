@@ -7,9 +7,9 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class PayloadSizeSummaryChart extends ChartWidget
+class ResponseTimeDistributionChart extends ChartWidget
 {
-    protected ?string $heading = 'Payload Size Summary Chart';
+    protected ?string $heading = 'Response Time Chart';
 
     public ?ApiTest $record = null;
 
@@ -26,7 +26,7 @@ class PayloadSizeSummaryChart extends ChartWidget
                     ->where('api_test_id', $this->record->id)
                     ->where('api_type', $apiType)
                     ->orderBy('query_id')
-                    ->avg('payload_size');
+                    ->avg('response_time');
             }
         }
 

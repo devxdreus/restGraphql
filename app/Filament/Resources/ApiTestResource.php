@@ -2,11 +2,14 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\ApiType;
 use App\Filament\Resources\ApiTestResource\Pages;
 use App\Filament\Resources\ApiTestResource\RelationManagers\ResultsRelationManager;
-use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeByQueryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryResponseTimeComparisonChart;
 use App\Models\ApiTest;
+use App\Models\Query;
 use BackedEnum;
+use Carbon\CarbonInterval;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
@@ -16,6 +19,7 @@ use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -28,28 +32,43 @@ class ApiTestResource extends Resource
 
     protected static ?string $slug = 'api-tests';
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRocketLaunch;
 
-    public static function form(Schema $schema): Schema
+    public static function infolist(Schema $schema): Schema
     {
         return $schema
-            ->components([
-                TextInput::make('count')
-                    ->required(),
+            ->columns(1)
+            ->schema([
+                Section::make('Test Details')
+                    ->description('Test details and statistics')
+                    ->aside()
+                    ->columns(3)
+                    ->schema([
+                        TextEntry::make('id')
+                            ->label('Test ID'),
 
-                TextInput::make('status')
-                    ->required(),
+                        TextEntry::make('count')
+                            ->label('Total Iterasi'),
 
-                DatePicker::make('completed_at')
-                    ->label('Completed Date'),
+                        TextEntry::make('duration')
+                            ->label('Durasi')
+                            ->formatStateUsing(fn($state) => CarbonInterval::seconds($state)->cascade()->forHumans()),
 
-                TextEntry::make('created_at')
-                    ->label('Created Date')
-                    ->state(fn(?ApiTest $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                        TextEntry::make('status')
+                            ->badge(),
 
-                TextEntry::make('updated_at')
-                    ->label('Last Modified Date')
-                    ->state(fn(?ApiTest $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                        TextEntry::make('results.count')
+                            ->label('Total Request')
+                            ->state(
+                                fn(ApiTest $record) => $record->results()->count() . ' / ' . $record->count * Query::count() * count(ApiType::values())
+                            ),
+
+                        TextEntry::make('created_at')
+                            ->label('Test Mulai'),
+
+//                        TextEntry::make('completed_at')
+//                            ->label('Test Selesai'),
+                    ])
             ]);
     }
 
@@ -57,19 +76,22 @@ class ApiTestResource extends Resource
     {
         return $table
             ->columns([
-                TextColumn::make('count'),
+                TextColumn::make('id')
+                    ->label('Test ID'),
+
+                TextColumn::make('count')
+                    ->label('Total Iterasi'),
 
                 TextColumn::make('status')
                     ->badge(),
 
-                TextColumn::make('created_at')
-                    ->dateTime(),
-
-                TextColumn::make('completed_at')
-                    ->dateTime(),
-
                 TextColumn::make('duration')
-                    ->formatStateUsing(fn($state) => $state . ' seconds'),
+                    ->label('Durasi')
+                    ->formatStateUsing(fn($state) => CarbonInterval::seconds($state)->cascade()->forHumans()),
+
+                TextColumn::make('created_at')
+                    ->label('Test Mulai')
+                    ->dateTime(),
             ])
             ->defaultSort('created_at', 'desc')
             ->filters([
@@ -107,7 +129,7 @@ class ApiTestResource extends Resource
     public static function getWidgets(): array
     {
         return [
-            ResponseTimeByQueryChart::class,
+            QueryResponseTimeComparisonChart::class,
         ];
     }
 

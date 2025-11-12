@@ -8,7 +8,7 @@ use App\Models\Query;
 use Filament\Support\RawJs;
 use Filament\Widgets\ChartWidget;
 
-class ResponseTimeByQueryChart extends ChartWidget
+class QueryResponseTimeComparisonChart extends ChartWidget
 {
     protected ?string $heading = 'Response Time Chart';
 

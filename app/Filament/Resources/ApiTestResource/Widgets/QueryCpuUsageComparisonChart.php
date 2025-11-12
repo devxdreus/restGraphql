@@ -6,7 +6,7 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class CpuUsageByQueryChart extends ChartWidget
+class QueryCpuUsageComparisonChart extends ChartWidget
 {
     protected ?string $heading = 'Cpu Usage Chart';
 

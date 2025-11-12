@@ -2,67 +2,64 @@
 
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
+use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class PayloadSizeByQueryChart extends ChartWidget
+class MemoryUsageDistributionChart extends ChartWidget
 {
-    protected ?string $heading = 'Payload Size By Query Chart';
+    protected ?string $heading = 'Mem Usage Chart';
 
     public ?ApiTest $record = null;
 
-    public ?string $filter = '1';
-
     protected function getData(): array
     {
-        $record = $this->record->results()->success()
-            ->orderBy('created_at')
-            ->where('query_id', $this->filter);
-        $rest = $record->clone()->rest()->pluck('payload_size');
-        $graphql = $record->clone()->graphql()->pluck('payload_size');
-        $integrated = $record->clone()->integrated()->pluck('payload_size');
+        $queries = Query::all();
+        $apiTypes = ApiType::values();
 
-        $labels = range(1, $rest->count());
+        $data = [];
+        foreach ($apiTypes as $apiType) {
+            foreach ($queries as $query) {
+                $data[$apiType][] = (int)$query->testResults()
+                    ->success()
+                    ->where('api_test_id', $this->record->id)
+                    ->where('api_type', $apiType)
+                    ->orderBy('query_id')
+                    ->avg('mem_usage');
+            }
+        }
 
         return [
+            'labels' => $queries->pluck('name'),
             'datasets' => [
                 [
                     'label' => 'Rest',
-                    'data' => $rest->toArray(),
+                    'data' => $data[ApiType::Rest->value],
                     'backgroundColor' => 'rgba(75, 192, 192, 0.2)',
                     'borderColor' => 'rgba(75, 192, 192, 1)',
                     'borderWidth' => 1,
-                    'tension' => 0.3,
                 ],
                 [
                     'label' => 'GraphQL',
-                    'data' => $graphql->toArray(),
+                    'data' => $data[ApiType::Graphql->value],
                     'backgroundColor' => 'rgba(255, 99, 132, 0.2)',
                     'borderColor' => 'rgba(255, 99, 132, 1)',
                     'borderWidth' => 1,
-                    'tension' => 0.3,
                 ],
                 [
                     'label' => 'Integrated',
-                    'data' => $integrated->toArray(),
+                    'data' => $data[ApiType::Integrated->value],
                     'backgroundColor' => 'rgba(54, 162, 235, 0.2)',
                     'borderColor' => 'rgba(54, 162, 235, 1)',
                     'borderWidth' => 1,
-                    'tension' => 0.3,
                 ]
-            ],
-            'labels' => $labels,
+            ]
         ];
-    }
-
-    protected function getFilters(): ?array
-    {
-        return Query::all()->pluck('name', 'id')->toArray();
     }
 
     protected function getType(): string
     {
-        return 'line';
+        return 'bar';
     }
 }

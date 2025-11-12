@@ -7,9 +7,9 @@ use App\Models\ApiTest;
 use App\Models\Query;
 use Filament\Widgets\ChartWidget;
 
-class MemUsageSummaryChart extends ChartWidget
+class PayloadSizeDistributionChart extends ChartWidget
 {
-    protected ?string $heading = 'Mem Usage Chart';
+    protected ?string $heading = 'Payload Size Summary Chart';
 
     public ?ApiTest $record = null;
 
@@ -26,7 +26,7 @@ class MemUsageSummaryChart extends ChartWidget
                     ->where('api_test_id', $this->record->id)
                     ->where('api_type', $apiType)
                     ->orderBy('query_id')
-                    ->avg('mem_usage');
+                    ->avg('payload_size');
             }
         }
 

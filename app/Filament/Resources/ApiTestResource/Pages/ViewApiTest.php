@@ -4,16 +4,16 @@ namespace App\Filament\Resources\ApiTestResource\Pages;
 
 use App\Filament\Resources\ApiTestResource;
 use App\Filament\Resources\ApiTestResource\Widgets\ComparisonStatsWidget;
-use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageByQueryChart;
-use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageSummaryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryCpuUsageComparisonChart;
+use App\Filament\Resources\ApiTestResource\Widgets\CpuUsageDistributionChart;
 use App\Filament\Resources\ApiTestResource\Widgets\EfficiencyScoreWidget;
-use App\Filament\Resources\ApiTestResource\Widgets\MemUsageByQueryChart;
-use App\Filament\Resources\ApiTestResource\Widgets\MemUsageSummaryChart;
-use App\Filament\Resources\ApiTestResource\Widgets\PayloadSizeByQueryChart;
-use App\Filament\Resources\ApiTestResource\Widgets\PayloadSizeSummaryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryMemoryUsageComparisonChart;
+use App\Filament\Resources\ApiTestResource\Widgets\MemoryUsageDistributionChart;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryPayloadSizeComparisonChart;
+use App\Filament\Resources\ApiTestResource\Widgets\PayloadSizeDistributionChart;
 use App\Filament\Resources\ApiTestResource\Widgets\ResourceUtilizationRadarChart;
-use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeByQueryChart;
-use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeSummaryChart;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryResponseTimeComparisonChart;
+use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeDistributionChart;
 use App\Filament\Resources\ApiTestResource\Widgets\SuccessRateWidget;
 use App\Models\Query;
 use Filament\Actions\EditAction;
@@ -33,21 +33,21 @@ class ViewApiTest extends ViewRecord
         ];
     }
 
-    protected function getHeaderWidgets(): array
+    protected function getFooterWidgets(): array
     {
         return [
+            SuccessRateWidget::class,
+            QueryResponseTimeComparisonChart::class,
+            ResponseTimeDistributionChart::class,
+            QueryPayloadSizeComparisonChart::class,
+            PayloadSizeDistributionChart::class,
+            QueryMemoryUsageComparisonChart::class,
+            MemoryUsageDistributionChart::class,
+            QueryCpuUsageComparisonChart::class,
+            CpuUsageDistributionChart::class,
+//            ResourceUtilizationRadarChart::class,
             ComparisonStatsWidget::class,
 //            EfficiencyScoreWidget::class,
-            SuccessRateWidget::class,
-//            ResourceUtilizationRadarChart::class,
-            ResponseTimeByQueryChart::class,
-            ResponseTimeSummaryChart::class,
-            PayloadSizeByQueryChart::class,
-            PayloadSizeSummaryChart::class,
-            MemUsageByQueryChart::class,
-            MemUsageSummaryChart::class,
-            CpuUsageByQueryChart::class,
-            CpuUsageSummaryChart::class,
         ];
     }
 }
