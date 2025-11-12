@@ -7,6 +7,7 @@ use App\Models\ApiTestResult;
 use App\Models\Query;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
+use Illuminate\Support\Number;
 
 class ComparisonStatsWidget extends StatsOverviewWidget
 {
@@ -26,7 +27,7 @@ class ComparisonStatsWidget extends StatsOverviewWidget
         if (!$this->record) {
             $results = ApiTestResult::query()->success();
         } else {
-            $results = $this->record->results()->success()->where('query_id', $this->filter);
+            $results = $this->record->results()->success();
         }
 
         // Response Time Stats
@@ -93,66 +94,66 @@ class ComparisonStatsWidget extends StatsOverviewWidget
 
         return [
             // Response Time Stats
-            Stat::make('Avg Response Time (Integrated)', number_format($integratedAvgResponseTime, 2) . ' ms')
+            Stat::make('Avg Response Time (Integrated)', Number::format(($integratedAvgResponseTime), 0) . ' ms')
                 ->description(number_format(abs($overallImprovementResponseTime), 2) . '% ' . ($overallImprovementResponseTime > 0 ? 'Faster' : 'Slower'))
                 ->descriptionIcon($overallImprovementResponseTime > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($overallImprovementResponseTime > 0 ? 'success' : 'danger'),
 
-            Stat::make('Response Time vs Rest', number_format($improvementResponseTimeVsRest, 2) . '%')
-                ->description("{$fasterResponseTimeVsRest}/{$totalQueries} Query " . ($improvementResponseTimeVsRest > 0 ? 'Faster' : 'Slower'))
+            Stat::make('vs Rest (' . Number::format($restAvgResponseTime, 0) . ' ms)', Number::format($improvementResponseTimeVsRest, 2) . '%')
+                ->description("{$fasterResponseTimeVsRest}/{$totalQueries} Query Faster")
                 ->descriptionIcon($improvementResponseTimeVsRest > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementResponseTimeVsRest > 0 ? 'success' : 'danger'),
 
-            Stat::make('Response Time vs GraphQL', number_format($improvementResponseTimeVsGraphQL, 2) . '%')
-                ->description("{$fasterResponseTimeVsGraphQL}/{$totalQueries} Query " . ($improvementResponseTimeVsGraphQL > 0 ? 'Faster' : 'Slower'))
+            Stat::make('vs GraphQl (' . Number::format($graphqlAvgResponseTime, 0) . ' ms)', Number::format($improvementResponseTimeVsGraphQL, 2) . '%')
+                ->description("{$fasterResponseTimeVsGraphQL}/{$totalQueries} Query Faster")
                 ->descriptionIcon($improvementResponseTimeVsGraphQL > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementResponseTimeVsGraphQL > 0 ? 'success' : 'danger'),
 
             // Payload Size Stats
-            Stat::make('Avg Payload Size (Integrated)', number_format($integratedAvgPayloadSize / 1024, 2) . ' KB')
-                ->description(number_format(abs($overallImprovementPayloadSize), 2) . '% ' . ($overallImprovementPayloadSize > 0 ? 'Smaller' : 'Larger'))
+            Stat::make('Avg Payload Size (Integrated)', Number::format($integratedAvgPayloadSize / 1024, 2) . ' KB')
+                ->description(Number::format(abs($overallImprovementPayloadSize), 2) . '% ' . ($overallImprovementPayloadSize > 0 ? 'Smaller' : 'Larger'))
                 ->descriptionIcon($overallImprovementPayloadSize > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($overallImprovementPayloadSize > 0 ? 'success' : 'danger'),
 
-            Stat::make('Payload Size vs Rest', number_format($improvementPayloadSizeVsRest, 2) . '%')
-                ->description("{$smallerPayloadVsRest}/{$totalQueries} Query " . ($improvementPayloadSizeVsRest > 0 ? 'Smaller' : 'Larger'))
+            Stat::make('vs Rest (' . Number::format($restAvgPayloadSize / 1024, 2) . ' kb)', Number::format($improvementPayloadSizeVsRest, 2) . '%')
+                ->description("{$smallerPayloadVsRest}/{$totalQueries} Query Smaller")
                 ->descriptionIcon($improvementPayloadSizeVsRest > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementPayloadSizeVsRest > 0 ? 'success' : 'danger'),
 
-            Stat::make('Payload Size vs GraphQL', number_format($improvementPayloadSizeVsGraphQL, 2) . '%')
-                ->description("{$smallerPayloadVsGraphQL}/{$totalQueries} Query " . ($improvementPayloadSizeVsGraphQL > 0 ? 'Smaller' : 'Larger'))
+            Stat::make('vs GraphQL (' . Number::format($graphqlAvgPayloadSize / 1024, 2) . ' kb)', Number::format($improvementPayloadSizeVsGraphQL, 2) . '%')
+                ->description("{$smallerPayloadVsGraphQL}/{$totalQueries} Query Smaller")
                 ->descriptionIcon($improvementPayloadSizeVsGraphQL > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementPayloadSizeVsGraphQL > 0 ? 'success' : 'danger'),
 
             // Memory Usage Stats
-            Stat::make('Avg Memory Usage (Integrated)', number_format($integratedAvgMemUsage / 1024, 2) . ' KB')
-                ->description(number_format(abs($overallImprovementMemUsage), 2) . '% ' . ($overallImprovementMemUsage > 0 ? 'Lower' : 'Higher'))
+            Stat::make('Avg Memory Usage (Integrated)', Number::format($integratedAvgMemUsage / 1024, 2) . ' KB')
+                ->description(Number::format(abs($overallImprovementMemUsage), 2) . '% ' . ($overallImprovementMemUsage > 0 ? 'Lower' : 'Higher'))
                 ->descriptionIcon($overallImprovementMemUsage > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($overallImprovementMemUsage > 0 ? 'success' : 'danger'),
 
-            Stat::make('Memory Usage vs Rest', number_format($improvementMemUsageVsRest, 2) . '%')
-                ->description("{$lowerMemUsageVsRest}/{$totalQueries} Query " . ($improvementMemUsageVsRest > 0 ? 'Lower' : 'Higher'))
+            Stat::make('vs Rest (' . Number::format($restAvgMemUsage / 1024, 2) . ' kb)', Number::format($improvementMemUsageVsRest, 2) . '%')
+                ->description("{$lowerMemUsageVsRest}/{$totalQueries} Query Lower")
                 ->descriptionIcon($improvementMemUsageVsRest > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementMemUsageVsRest > 0 ? 'success' : 'danger'),
 
-            Stat::make('Memory Usage vs GraphQL', number_format($improvementMemUsageVsGraphQL, 2) . '%')
-                ->description("{$lowerMemUsageVsGraphQL}/{$totalQueries} Query " . ($improvementMemUsageVsGraphQL > 0 ? 'Lower' : 'Higher'))
+            Stat::make('vs GraphQL (' . Number::format($graphqlAvgMemUsage / 1024, 2) . ' kb)', Number::format($improvementMemUsageVsGraphQL, 2) . '%')
+                ->description("{$lowerMemUsageVsGraphQL}/{$totalQueries} Query Lower")
                 ->descriptionIcon($improvementMemUsageVsGraphQL > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementMemUsageVsGraphQL > 0 ? 'success' : 'danger'),
 
             // CPU Usage Stats
-            Stat::make('Avg CPU Usage (Integrated)', number_format($integratedAvgCpuUsage * 100, 2) . '%')
-                ->description(number_format(abs($overallImprovementCpuUsage), 2) . '% ' . ($overallImprovementCpuUsage > 0 ? 'Lower' : 'Higher'))
+            Stat::make('Avg CPU Usage (Integrated)', Number::format($integratedAvgCpuUsage, 2) . '%')
+                ->description(Number::format(abs($overallImprovementCpuUsage), 2) . '% ' . ($overallImprovementCpuUsage > 0 ? 'Lower' : 'Higher'))
                 ->descriptionIcon($overallImprovementCpuUsage > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($overallImprovementCpuUsage > 0 ? 'success' : 'danger'),
 
-            Stat::make('CPU Usage vs Rest', number_format($improvementCpuUsageVsRest, 2) . '%')
-                ->description("{$lowerCpuUsageVsRest}/{$totalQueries} Query " . ($improvementCpuUsageVsRest > 0 ? 'Lower' : 'Higher'))
+            Stat::make('vs Rest (' . Number::format($restAvgCpuUsage, 2) . '%)', Number::format($improvementCpuUsageVsRest, 2) . '%')
+                ->description("{$lowerCpuUsageVsRest}/{$totalQueries} Query Lower")
                 ->descriptionIcon($improvementCpuUsageVsRest > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementCpuUsageVsRest > 0 ? 'success' : 'danger'),
 
-            Stat::make('CPU Usage vs GraphQL', number_format($improvementCpuUsageVsGraphQL, 2) . '%')
-                ->description("{$lowerCpuUsageVsGraphQL}/{$totalQueries} Query " . ($improvementCpuUsageVsGraphQL > 0 ? 'Lower' : 'Higher'))
+            Stat::make('vs GraphQL (' . Number::format($graphqlAvgCpuUsage, 2) . '%)', Number::format($improvementCpuUsageVsGraphQL, 2) . '%')
+                ->description("{$lowerCpuUsageVsGraphQL}/{$totalQueries} Query Lower")
                 ->descriptionIcon($improvementCpuUsageVsGraphQL > 0 ? 'heroicon-o-arrow-trending-down' : 'heroicon-o-arrow-trending-up')
                 ->color($improvementCpuUsageVsGraphQL > 0 ? 'success' : 'danger'),
         ];
