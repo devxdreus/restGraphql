@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
 use App\Models\ApiTest;
+use App\Models\ApiTestResult;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 
@@ -12,7 +13,11 @@ class SuccessRateWidget extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $results = $this->record->results();
+        if ($this->record) {
+            $results = $this->record->results();
+        } else {
+            $results = ApiTestResult::query();
+        }
 
         $restTotal = $results->clone()->rest()->count();
         $restSuccess = $results->clone()->rest()->success()->count();

@@ -60,7 +60,7 @@ class ApiTestResource extends Resource
                         TextEntry::make('results.count')
                             ->label('Total Request')
                             ->state(
-                                fn(ApiTest $record) => $record->results()->count() . ' / ' . $record->count * Query::count() * count(ApiType::values())
+                                fn(ApiTest $record) => $record->count * Query::count() * count(ApiType::values())
                             ),
 
                         TextEntry::make('created_at')

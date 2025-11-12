@@ -2,6 +2,9 @@
 
 namespace App\Filament\Pages;
 
+use App\Filament\Resources\ApiTestResource\Widgets\ComparisonStatsWidget;
+use App\Filament\Resources\ApiTestResource\Widgets\QueryResponseTimeComparisonChart;
+use App\Filament\Resources\ApiTestResource\Widgets\SuccessRateWidget;
 use App\Filament\Widgets\AvgCpuUsageByQueryChart;
 use App\Filament\Widgets\AvgMemUsageByQueryChart;
 use App\Filament\Widgets\AvgResponseTimeByQueryChart;
@@ -38,12 +41,8 @@ class Dashboard extends BaseDashboard
     public function getWidgets(): array
     {
         return [
-            ResponseTimeByTestChart::class,
-            AvgResponseTimeByQueryChart::class,
-            CpuUsageByTestChart::class,
-            AvgCpuUsageByQueryChart::class,
-            MemUsageByTestChart::class,
-            AvgMemUsageByQueryChart::class,
+            SuccessRateWidget::class,
+            ComparisonStatsWidget::class,
         ];
     }
 }

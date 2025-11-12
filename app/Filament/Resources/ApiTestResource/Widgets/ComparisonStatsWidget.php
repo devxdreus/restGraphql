@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\ApiTestResource\Widgets;
 
 use App\Models\ApiTest;
+use App\Models\ApiTestResult;
 use App\Models\Query;
 use Filament\Widgets\StatsOverviewWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
@@ -22,7 +23,11 @@ class ComparisonStatsWidget extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $results = $this->record->results()->success()->where('query_id', $this->filter);
+        if (!$this->record) {
+            $results = ApiTestResult::query()->success();
+        } else {
+            $results = $this->record->results()->success()->where('query_id', $this->filter);
+        }
 
         // Response Time Stats
         $restAvgResponseTime = $results->clone()->rest()->avg('response_time');
@@ -159,7 +164,11 @@ class ComparisonStatsWidget extends StatsOverviewWidget
         $betterCount = 0;
 
         foreach ($queries as $query) {
-            $results = $this->record->results()->success()->where('query_id', $query->id);
+            if (!$this->record) {
+                $results = ApiTestResult::query()->success()->where('query_id', $query->id);
+            } else {
+                $results = $this->record->results()->success()->where('query_id', $query->id);
+            }
 
             $compareAvg = $results->clone()->where('api_type', $compareWith)->avg($column);
             $integratedAvg = $results->clone()->integrated()->avg($column);
