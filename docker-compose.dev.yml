@@ -11,7 +11,7 @@ services:
       - base_production
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.laravel.rule=HostRegexp(`laravel.test`)"
+      - "traefik.http.routers.laravel.rule=HostRegexp(`rest-graphql.test`)"
       - "traefik.http.routers.laravel.entrypoints=web"
       - "traefik.http.services.laravel.loadbalancer.server.port=8080"
       - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
