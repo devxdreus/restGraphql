@@ -18,11 +18,20 @@ class RunApiTest extends Command
     protected $description = 'Command description';
 
     protected ?string $token;
-
     protected ?string $restUrl;
     protected ?string $graphqlUrl;
-
     protected ?ApiTest $apiTest;
+
+    private const CACHE_KEY_PATTERN = 'api_query_%d_preset_%d_%s';
+
+    private const METRICS = ['response_time', 'payload_size', 'mem_usage', 'cpu_usage'];
+
+    private const METRIC_WEIGHTS = [
+        'response_time' => 0.5,
+        'payload_size' => 0.2,
+        'mem_usage' => 0.2,
+        'cpu_usage' => 0.1,
+    ];
 
     public function __construct()
     {
@@ -35,253 +44,243 @@ class RunApiTest extends Command
     public function handle()
     {
         $count = $this->option('count');
-
         $this->info("Running API test with {$count} iterations");
 
         Cache::flush();
 
-        $this->apiTest = ApiTest::create([
-            'count' => $count,
-        ]);
+        $this->call('github:limit');
+
+        $this->apiTest = ApiTest::create(['count' => $count]);
 
         try {
-            for ($i = 1; $i <= $count; $i++) {
-                $this->info("Running iteration {$i} of {$count}");
-
-                foreach (Query::all() as $query) {
-                    $this->info("Running query: {$query->name}");
-
-                    $restResult = $this->apiTest->results()->create([
-                        'query_id' => $query->id,
-                        'preset_id' => $query->activePreset->id,
-                        'api_type' => ApiType::Rest,
-                        'request_type' => ApiType::Rest,
-                        'status' => ApiStatusType::Processing,
-                    ]);
-                    $restData = $this->fetchRestData($query->activePreset);
-                    $restResult->update($restData);
-
-                    $graphqlResult = $this->apiTest->results()->create([
-                        'query_id' => $query->id,
-                        'preset_id' => $query->activePreset->id,
-                        'api_type' => ApiType::Graphql,
-                        'request_type' => ApiType::Graphql,
-                        'status' => ApiStatusType::Processing,
-                    ]);
-                    $graphqlData = $this->fetchGraphQLData($query->activePreset);
-                    $graphqlResult->update($graphqlData);
-
-                    $integratedResult = $this->apiTest->results()->create([
-                        'query_id' => $query->id,
-                        'preset_id' => $query->activePreset->id,
-                        'api_type' => ApiType::Integrated,
-                        'status' => ApiStatusType::Processing,
-                    ]);
-                    $integratedData = $this->fetchIntegrated($query->activePreset);
-                    $integratedResult->update($integratedData);
-                }
-            }
-
-            $this->apiTest->update([
-                'status' => ApiStatusType::Success,
-                'completed_at' => now(),
-            ]);
-
+            $this->runTestIterations($count);
+            $this->completeTest(ApiStatusType::Success);
+            $this->info("API test completed");
+            return static::SUCCESS;
         } catch (\Exception $e) {
-            $this->apiTest->update([
-                'status' => ApiStatusType::Failed,
-                'completed_at' => now(),
-            ]);
-
+            $this->completeTest(ApiStatusType::Failed);
             $this->error('API test failed');
             $this->error($e->getMessage());
             return static::FAILURE;
         }
+    }
 
-        $this->info("API test completed");
+    private function runTestIterations(int $count): void
+    {
+        for ($i = 1; $i <= $count; $i++) {
+            $this->info("Running iteration {$i} of {$count}");
 
-        return static::SUCCESS;
+            foreach (Query::all()->shuffle() as $query) {
+                $this->info("Running query: {$query->name}");
+                $this->executeQueryTests($query);
+            }
+        }
+    }
+
+    private function executeQueryTests(Query $query): void
+    {
+        $preset = $query->activePreset;
+
+        // REST test
+        $this->createAndUpdateResult($preset, ApiType::Rest, function ($preset) {
+            return $this->fetchRestData($preset);
+        });
+
+        // GraphQL test
+        $this->createAndUpdateResult($preset, ApiType::Graphql, function ($preset) {
+            return $this->fetchGraphQLData($preset);
+        });
+
+        // Integrated test
+        $this->createAndUpdateResult($preset, ApiType::Integrated, function ($preset) {
+            return $this->fetchIntegrated($preset);
+        }, false);
+    }
+
+    private function createAndUpdateResult(QueryPreset $preset, ApiType $apiType, callable $fetchCallback, bool $matchRequestType = true): void
+    {
+        $result = $this->apiTest->results()->create([
+            'query_id' => $preset->query_id,
+            'preset_id' => $preset->id,
+            'api_type' => $apiType,
+            'request_type' => $matchRequestType ? $apiType : null,
+            'status' => ApiStatusType::Processing,
+        ]);
+
+        $data = $fetchCallback($preset);
+        $result->update($data);
     }
 
     private function fetchRestData(QueryPreset $query): array
     {
         try {
-            $startTime = microtime(true);
-            $memoryBefore = memory_get_usage();
-            $cpuBefore = $this->getCpuTime();
+            $metrics = $this->captureMetrics(function () use ($query) {
+                return Http::withToken($this->token)
+                    ->get($this->restUrl . '/' . $query->rest_query);
+            });
 
-            $response = Http::withToken($this->token)
-                ->get($this->restUrl . '/' . $query->rest_query);
-
-            $memoryAfter = memory_get_usage();
-            $cpuAfter = $this->getCpuTime();
-            $endTime = microtime(true);
-
-            $responseTime = round(($endTime - $startTime) * 1000);
-            $payloadSize = strlen($response->body());
-            $memoryUsage = $memoryAfter - $memoryBefore;
-            $cpuTime = $cpuAfter - $cpuBefore; // in microseconds
-            $cpuUsage = $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0;
-
-            if ($response->failed()) {
-                $this->error('REST API Request Failed');
-                $this->error('Status: ' . $response->status());
-
-                $data = [
-                    'status' => ApiStatusType::Failed,
-                ];
-
-                Cache::put("api_query_{$query->query_id}_preset_{$query->id}_rest", $data);
-
-                return $data;
+            if ($metrics['response']->failed()) {
+                return $this->handleFailedRequest('REST', $query, 'rest');
             }
 
-            $this->line("REST - Response time: {$responseTime}ms");
-            $this->line("REST - Payload size: {$payloadSize} bytes");
-            $this->line("REST - Memory usage: {$memoryUsage} bytes");
-            $this->line("REST - CPU time: {$cpuTime}μs");
-            $this->line("REST - CPU usage: {$cpuUsage}%");
-
-            $data = [
-                'status' => ApiStatusType::Success,
-                'response_time' => $responseTime,
-                'payload_size' => $payloadSize,
-                'mem_usage' => $memoryUsage,
-                'cpu_usage' => $cpuUsage,
-            ];
-
-            Cache::put("api_query_{$query->query_id}_preset_{$query->id}_rest", $data);
-
-            $data['response'] = $response->json();
-            return $data;
-
+            return $this->handleSuccessfulRequest('REST', $metrics, $query, 'rest');
         } catch (\Exception $e) {
-            $this->error('REST API Error');
-            $this->error($e->getMessage());
-
-            $data = [
-                'status' => ApiStatusType::Failed,
-            ];
-
-            Cache::put("api_query_{$query->query_id}_preset_{$query->id}_rest", $data);
-
-            return $data;
+            return $this->handleRequestException('REST', $e, $query, 'rest');
         }
     }
 
     private function fetchGraphQLData(QueryPreset $query): array
     {
         try {
-            $startTime = microtime(true);
-            $memoryBefore = memory_get_usage();
-            $cpuBefore = $this->getCpuTime();
+            $metrics = $this->captureMetrics(function () use ($query) {
+                return Http::withToken($this->token)
+                    ->post($this->graphqlUrl, ['query' => $query->graphql_query]);
+            });
 
-            $response = Http::withToken($this->token)
-                ->post($this->graphqlUrl, ['query' => $query->graphql_query]);
-
-            $memoryAfter = memory_get_usage();
-            $cpuAfter = $this->getCpuTime();
-            $endTime = microtime(true);
-
-            $responseTime = round(($endTime - $startTime) * 1000);
-            $payloadSize = strlen($response->body());
-            $memoryUsage = $memoryAfter - $memoryBefore;
-            $cpuTime = $cpuAfter - $cpuBefore; // in microseconds
-            $cpuUsage = $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0;
-
-            if ($response->failed() || isset($response['errors'])) {
-                $this->error('GraphQL API Request Failed');
-                $this->error('Status: ' . $response->status());
-
-                $data = [
-                    'status' => ApiStatusType::Failed,
-                ];
-
-                Cache::put("api_query_{$query->query_id}_preset_{$query->id}_graphql", $data);
-
-                return $data;
+            if ($metrics['response']->failed() || isset($metrics['response']['errors'])) {
+                return $this->handleFailedRequest('GraphQL', $query, 'graphql');
             }
 
-            $this->line("GraphQL - Response time: {$responseTime}ms");
-            $this->line("GraphQL - Payload size: {$payloadSize} bytes");
-            $this->line("GraphQL - Memory usage: {$memoryUsage} bytes");
-            $this->line("GraphQL - CPU time: {$cpuTime}μs");
-            $this->line("GraphQL - CPU usage: {$cpuUsage}%");
-
-            $data = [
-                'status' => ApiStatusType::Success,
-                'response_time' => $responseTime,
-                'payload_size' => $payloadSize,
-                'mem_usage' => $memoryUsage,
-                'cpu_usage' => $cpuUsage,
-            ];
-
-            Cache::put("api_query_{$query->query_id}_preset_{$query->id}_graphql", $data);
-
-            $data['response'] = $response->json();
-            return $data;
-
+            return $this->handleSuccessfulRequest('GraphQL', $metrics, $query, 'graphql');
         } catch (\Exception $e) {
-            $this->error('GraphQL API Error');
-            $this->error($e->getMessage());
-
-            $data = [
-                'status' => ApiStatusType::Failed,
-            ];
-
-            Cache::put("api_query_{$query->query_id}_preset_{$query->id}_graphql", $data);
-
-            return $data;
+            return $this->handleRequestException('GraphQL', $e, $query, 'graphql');
         }
+    }
+
+    private function captureMetrics(callable $requestCallback): array
+    {
+        $startTime = microtime(true);
+        $memoryBefore = memory_get_usage();
+        $cpuBefore = $this->getCpuTime();
+
+        $response = $requestCallback();
+
+        $memoryAfter = memory_get_usage();
+        $cpuAfter = $this->getCpuTime();
+        $endTime = microtime(true);
+
+        $responseTime = round(($endTime - $startTime) * 1000);
+        $cpuTime = $cpuAfter - $cpuBefore;
+
+        return [
+            'response' => $response,
+            'response_time' => $responseTime,
+            'payload_size' => strlen($response->body()),
+            'mem_usage' => $memoryAfter - $memoryBefore,
+            'cpu_usage' => $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0,
+            'cpu_time' => $cpuTime,
+        ];
+    }
+
+    private function handleSuccessfulRequest(string $apiType, array $metrics, QueryPreset $query, string $cacheKey): array
+    {
+        $this->logMetrics($apiType, $metrics);
+
+        $data = [
+            'status' => ApiStatusType::Success,
+            'response_time' => $metrics['response_time'],
+            'payload_size' => $metrics['payload_size'],
+            'mem_usage' => $metrics['mem_usage'],
+            'cpu_usage' => $metrics['cpu_usage'],
+        ];
+
+        $this->cacheResult($query, $cacheKey, $data);
+        $data['response'] = $metrics['response']->json();
+
+        return $data;
+    }
+
+    private function handleFailedRequest(string $apiType, QueryPreset $query, string $cacheKey): array
+    {
+        $this->error("{$apiType} API Request Failed");
+
+        $data = ['status' => ApiStatusType::Failed];
+        $this->cacheResult($query, $cacheKey, $data);
+
+        return $data;
+    }
+
+    private function handleRequestException(string $apiType, \Exception $e, QueryPreset $query, string $cacheKey): array
+    {
+        $this->error("{$apiType} API Error");
+        $this->error($e->getMessage());
+
+        $data = ['status' => ApiStatusType::Failed];
+        $this->cacheResult($query, $cacheKey, $data);
+
+        return $data;
+    }
+
+    private function logMetrics(string $apiType, array $metrics): void
+    {
+        $this->line("{$apiType} - Response time: {$metrics['response_time']}ms");
+        $this->line("{$apiType} - Payload size: {$metrics['payload_size']} bytes");
+        $this->line("{$apiType} - Memory usage: {$metrics['mem_usage']} bytes");
+//        $this->line("{$apiType} - CPU time: {$metrics['cpu_time']}μs");
+        $this->line("{$apiType} - CPU usage: {$metrics['cpu_usage']}%");
+    }
+
+    private function cacheResult(QueryPreset $query, string $type, array $data): void
+    {
+        $key = sprintf(self::CACHE_KEY_PATTERN, $query->query_id, $query->id, $type);
+        Cache::put($key, $data);
+    }
+
+    private function getCachedResult(QueryPreset $query, string $type): ?array
+    {
+        $key = sprintf(self::CACHE_KEY_PATTERN, $query->query_id, $query->id, $type);
+        return Cache::get($key);
     }
 
     private function fetchIntegrated(QueryPreset $query): array
     {
-        $restCache = Cache::get("api_query_{$query->query_id}_preset_{$query->id}_rest");
-        $graphqlCache = Cache::get("api_query_{$query->query_id}_preset_{$query->id}_graphql");
+        $restCache = $this->getCachedResult($query, 'rest');
+        $graphqlCache = $this->getCachedResult($query, 'graphql');
 
         if ($restCache && $graphqlCache) {
-            $this->line('Integrated: rest & graphql cache found, using integrated');
-
-            $result = $this->analyzeMetric($restCache, $graphqlCache, $query);
-
-            if ($result === ApiType::Rest) {
-                $this->line('Integrated using REST API');
-                $data = $this->fetchRestData($query);
-            } else {
-                $this->line('Integrated using GraphQL API');
-                $data = $this->fetchGraphQLData($query);
-            }
-
-            $data['request_type'] = $result;
-
-            return $data;
+            return $this->fetchIntegratedFromBothCaches($query, $restCache, $graphqlCache);
         }
 
         if ($restCache) {
-            $this->line('Integrated: rest cache found, using graphql');
-
-            $graphqlData = $this->fetchGraphQLData($query);
-
-            $graphqlData['request_type'] = ApiType::Graphql;
-
-            return $graphqlData;
+            return $this->fetchWithRequestType($query, ApiType::Graphql, 'rest cache found, using graphql');
         }
 
         if ($graphqlCache) {
-            $this->line('Integrated: graphql cache found, using rest');
-
-            $restData = $this->fetchRestData($query);
-
-            $restData['request_type'] = ApiType::Rest;
-
-            return $restData;
+            return $this->fetchWithRequestType($query, ApiType::Rest, 'graphql cache found, using rest');
         }
 
         return [
             'status' => ApiStatusType::Failed,
             'request_type' => ApiType::Integrated,
         ];
+    }
+
+    private function fetchIntegratedFromBothCaches(QueryPreset $query, array $restCache, array $graphqlCache): array
+    {
+        $this->line('Integrated: rest & graphql cache found, using integrated');
+
+        $winner = $this->analyzeMetric($restCache, $graphqlCache, $query);
+        $isRest = $winner === ApiType::Rest;
+
+        $this->line('Integrated using ' . ($isRest ? 'REST' : 'GraphQL') . ' API');
+
+        $data = $isRest ? $this->fetchRestData($query) : $this->fetchGraphQLData($query);
+        $data['request_type'] = $winner;
+
+        return $data;
+    }
+
+    private function fetchWithRequestType(QueryPreset $query, ApiType $apiType, string $message): array
+    {
+        $this->line("Integrated: {$message}");
+
+        $data = $apiType === ApiType::Rest
+            ? $this->fetchRestData($query)
+            : $this->fetchGraphQLData($query);
+
+        $data['request_type'] = $apiType;
+
+        return $data;
     }
 
     private function analyzeMetric(array $rest, array $graphql, QueryPreset $query): ApiType
@@ -293,72 +292,88 @@ class RunApiTest extends Command
             return ApiType::Rest;
         }
 
-        $weight = [
-            'response_time' => 0.5,
-            'payload_size' => 0.2,
-            'mem_usage' => 0.2,
-            'cpu_usage' => 0.1,
-        ];
+        $minMaxValues = $this->calculateMinMaxForMetrics($query);
+        $normalizedRest = $this->normalizeMetrics($rest, $minMaxValues);
+        $normalizedGraphql = $this->normalizeMetrics($graphql, $minMaxValues);
 
-        // build min max accross all metric
-        $metric = ['response_time', 'payload_size', 'mem_usage', 'cpu_usage'];
-        $mins = [];
-        $maxs = [];
+        $scoreRest = $this->calculateScore($normalizedRest);
+        $scoreGraphql = $this->calculateScore($normalizedGraphql);
 
-        foreach ($metric as $m) {
-            $min = $query->testResults()->success()->min($m);
-            $max = $query->testResults()->success()->max($m);
+        return $this->determineWinner($scoreRest, $scoreGraphql, $rest, $graphql);
+    }
 
-            if ($min === $max) { // avoid division by zero; neutral band
+    private function calculateMinMaxForMetrics(QueryPreset $query): array
+    {
+        $minMaxValues = [];
+
+        foreach (self::METRICS as $metric) {
+            $min = $query->testResults()->success()->min($metric);
+            $max = $query->testResults()->success()->max($metric);
+
+            if ($min === $max) {
                 $min -= 1.0;
                 $max += 1.0;
             }
 
-            $mins[$m] = $min;
-            $maxs[$m] = $max;
+            $minMaxValues[$metric] = ['min' => $min, 'max' => $max];
         }
 
-        $norm = function (array $x) use ($metric, $mins, $maxs): array {
-            $out = [];
-            foreach ($metric as $m) {
-                $val = (float)($x[$m] ?? 0);
-                $den = $maxs[$m] - $mins[$m];
-                $out[$m] = $den != 0.0 ? max(0.0, min(1.0, ($val - $mins[$m]) / $den)) : 0.5;
-            }
-            return $out;
-        };
+        return $minMaxValues;
+    }
 
-        $norm_rest = $norm($rest);
-        $norm_graphql = $norm($graphql);
+    private function normalizeMetrics(array $data, array $minMaxValues): array
+    {
+        $normalized = [];
 
-        $score = function (array $xN) use ($weight): float {
-            return
-                $weight['response_time'] * $xN['response_time'] +
-                $weight['payload_size'] * $xN['payload_size'] +
-                $weight['mem_usage'] * $xN['mem_usage'] +
-                $weight['cpu_usage'] * $xN['cpu_usage'];
-        };
+        foreach (self::METRICS as $metric) {
+            $value = (float)($data[$metric] ?? 0);
+            $min = $minMaxValues[$metric]['min'];
+            $max = $minMaxValues[$metric]['max'];
+            $range = $max - $min;
 
-        $score_rest = $score($norm_rest);
-        $score_graphql = $score($norm_graphql);
-
-        if (abs($score_rest - $score_graphql) < 1e-9) {
-            $winner = ($rest['payload_size'] ?? INF) <= ($graphql['payload_size'] ?? INF) ? ApiType::Rest : ApiType::Graphql;
-        } else {
-            $winner = ($score_rest < $score_graphql) ? ApiType::Rest : ApiType::Graphql;
+            $normalized[$metric] = $range != 0.0
+                ? max(0.0, min(1.0, ($value - $min) / $range))
+                : 0.5;
         }
 
-        return $winner;
+        return $normalized;
+    }
+
+    private function calculateScore(array $normalizedMetrics): float
+    {
+        $score = 0.0;
+
+        foreach (self::METRIC_WEIGHTS as $metric => $weight) {
+            $score += $weight * $normalizedMetrics[$metric];
+        }
+
+        return $score;
+    }
+
+    private function determineWinner(float $scoreRest, float $scoreGraphql, array $rest, array $graphql): ApiType
+    {
+        if (abs($scoreRest - $scoreGraphql) < 1e-9) {
+            return ($rest['payload_size'] ?? INF) <= ($graphql['payload_size'] ?? INF)
+                ? ApiType::Rest
+                : ApiType::Graphql;
+        }
+
+        return $scoreRest < $scoreGraphql ? ApiType::Rest : ApiType::Graphql;
+    }
+
+    private function completeTest(ApiStatusType $status): void
+    {
+        $this->apiTest->update([
+            'status' => $status,
+            'completed_at' => now(),
+        ]);
     }
 
     private function getCpuTime(): int
     {
         $usage = getrusage();
 
-        // User CPU time: waktu CPU untuk kode aplikasi
         $userTime = ($usage['ru_utime.tv_sec'] * 1000000) + $usage['ru_utime.tv_usec'];
-
-        // System CPU time: waktu CPU untuk system calls
         $systemTime = ($usage['ru_stime.tv_sec'] * 1000000) + $usage['ru_stime.tv_usec'];
 
         return $userTime + $systemTime;
