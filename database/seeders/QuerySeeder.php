@@ -121,11 +121,11 @@ class QuerySeeder extends Seeder
             ],
             'Q7' => [
                 'name' => 'Q7',
-                'description' => 'Comments on issue #1 for a given repo (fallback: facebook/react)',
-                'rest_query' => 'repos/facebook/react/issues/1/comments',
+                'description' => 'Comments on issue #10 for a given repo (fallback: facebook/react)',
+                'rest_query' => 'repos/facebook/react/issues/10/comments',
                 'graphql_query' => 'query {
     repository(owner: "facebook", name: "react") {
-        issue(number: 1) {
+        issue(number: 10) {
             comments(first: 100) {
                 nodes {
                     body
@@ -236,10 +236,10 @@ class QuerySeeder extends Seeder
             'Q14' => [
                 'name' => 'Q14',
                 'description' => 'Issue #2 (title + comments) for facebook/react',
-                'rest_query' => 'repos/facebook/react/issues/2/comments',
+                'rest_query' => 'repos/facebook/react/issues/10/comments',
                 'graphql_query' => 'query {
     repository(owner: "facebook", name: "react") {
-        issue(number: 2) {
+        issue(number: 10) {
             title
             comments(first: 100) {
                 nodes {
