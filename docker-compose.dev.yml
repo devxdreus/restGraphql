@@ -9,6 +9,7 @@ services:
       - .:/var/www/html/
     networks:
       - base_production
+    restart: unless-stopped
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.laravel.rule=HostRegexp(`rest-graphql.test`)"
@@ -35,6 +36,7 @@ services:
       interval: 5s
       timeout: 3s
       retries: 3
+    restart: unless-stopped
 
 networks:
   base_production:
