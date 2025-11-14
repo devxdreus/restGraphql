@@ -6,11 +6,13 @@ use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\AuthenticateSession;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
+use Filament\Navigation\NavigationItem;
 use Filament\Pages\Dashboard;
 use Filament\Panel;
 use Filament\PanelProvider;
 use Filament\Support\Colors\Color;
 use Filament\Support\Enums\Width;
+use Filament\Support\Icons\Heroicon;
 use Filament\Widgets\AccountWidget;
 use Filament\Widgets\FilamentInfoWidget;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
@@ -55,6 +57,12 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
 //                Authenticate::class,
+            ])
+            ->navigationItems([
+                NavigationItem::make('Horizon')
+                    ->url('/horizon', shouldOpenInNewTab: true)
+                    ->icon(Heroicon::OutlinedQueueList)
+                    ->sort(9),
             ])
             ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()

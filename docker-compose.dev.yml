@@ -17,6 +17,21 @@ services:
       - "traefik.http.services.laravel.loadbalancer.server.port=8080"
       - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
 
+  horizon:
+    build:
+      target: development
+      args:
+        USER_ID: ${SPIN_USER_ID}
+        GROUP_ID: ${SPIN_GROUP_ID}
+    command: php artisan horizon
+    volumes:
+      - .:/var/www/html/
+    networks:
+      - base_production
+    depends_on:
+      - redis
+    restart: unless-stopped
+
   node:
     image: node:22
     volumes:
