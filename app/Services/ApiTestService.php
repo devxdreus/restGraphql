@@ -40,7 +40,7 @@ class ApiTestService
         );
     }
 
-    public function fetchRestData(QueryPreset $query): array
+    public function fetchRestData(ApiTest $apiTest, QueryPreset $query): array
     {
         try {
             $metrics = $this->captureMetrics(function () use ($query) {
@@ -49,16 +49,22 @@ class ApiTestService
             });
 
             if ($metrics['response']->failed()) {
-                return $this->handleFailedRequest($query, 'rest');
+                return $this->storeTestResult($apiTest, $query, ApiType::Rest, ApiStatusType::Failed);
             }
 
-            return $this->handleSuccessfulRequest($metrics, $query, 'rest');
+            return $this->storeTestResult(
+                $apiTest,
+                $query,
+                ApiType::Rest,
+                ApiStatusType::Success,
+                $metrics
+            );
         } catch (\Exception $e) {
-            return $this->handleRequestException($query, 'rest');
+            return $this->storeTestResult($apiTest, $query, ApiType::Rest, ApiStatusType::Failed);
         }
     }
 
-    public function fetchGraphQLData(QueryPreset $query): array
+    public function fetchGraphQLData(ApiTest $apiTest, QueryPreset $query): array
     {
         try {
             $metrics = $this->captureMetrics(function () use ($query) {
@@ -67,40 +73,79 @@ class ApiTestService
             });
 
             if ($metrics['response']->failed() || isset($metrics['response']['errors'])) {
-                return $this->handleFailedRequest($query, 'graphql');
+                return $this->storeTestResult($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed);
             }
 
-            return $this->handleSuccessfulRequest($metrics, $query, 'graphql');
+            return $this->storeTestResult(
+                $apiTest,
+                $query,
+                ApiType::Graphql,
+                ApiStatusType::Success,
+                $metrics
+            );
         } catch (\Exception $e) {
-            return $this->handleRequestException($query, 'graphql');
+            return $this->storeTestResult($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed);
         }
     }
 
-    public function fetchIntegrated(QueryPreset $query): array
+    public function fetchIntegrated(ApiTest $apiTest, QueryPreset $query): array
     {
         $restCache = $this->getCachedResult($query, 'rest');
         $graphqlCache = $this->getCachedResult($query, 'graphql');
 
         if ($restCache && $graphqlCache) {
-            return $this->fetchIntegratedFromBothCaches($query, $restCache, $graphqlCache);
+            return $this->fetchIntegratedFromBothCaches($apiTest, $query, $restCache, $graphqlCache);
         }
 
         if ($restCache) {
-            $data = $this->fetchGraphQLData($query);
+            $data = $this->fetchGraphQLData($apiTest, $query);
             $data['request_type'] = ApiType::Graphql;
             return $data;
         }
 
-        if ($graphqlCache) {
-            $data = $this->fetchRestData($query);
-            $data['request_type'] = ApiType::Rest;
-            return $data;
-        }
+        $data = $this->fetchRestData($apiTest, $query);
+        $data['request_type'] = ApiType::Rest;
+        return $data;
+    }
 
-        return [
-            'status' => ApiStatusType::Failed,
-            'request_type' => ApiType::Integrated,
+    private function fetchIntegratedFromBothCaches(ApiTest $apiTest, QueryPreset $query, array $restCache, array $graphqlCache): array
+    {
+        $winner = $this->analyzeMetric($restCache, $graphqlCache, $query);
+        $isRest = $winner === ApiType::Rest;
+
+        $data = $isRest ? $this->fetchRestData($apiTest, $query) : $this->fetchGraphQLData($apiTest, $query);
+        $data['request_type'] = $winner;
+
+        return $data;
+    }
+
+    private function storeTestResult(
+        ApiTest       $apiTest,
+        QueryPreset   $query,
+        ApiType       $apiType,
+        ApiStatusType $status,
+                      $metrics = null,
+                      $requestType = null
+    ): array
+    {
+        $data = [
+            'query_id' => $query->query_id,
+            'preset_id' => $query->id,
+            'api_type' => $apiType,
+            'status' => $status,
+            'request_type' => $requestType ?? $apiType,
         ];
+
+        $data['response_time'] = $metrics['response_time'] ?? null;
+        $data['payload_size'] = $metrics['payload_size'] ?? null;
+        $data['mem_usage'] = $metrics['mem_usage'] ?? null;
+        $data['cpu_usage'] = $metrics['cpu_usage'] ?? null;
+
+        $this->putCachedResult($query, $apiType->value, $data);
+
+        $data['response'] = $metrics['response']?->collect() ?? null;
+
+        return $apiTest->results()->create($data)->toArray();
     }
 
     public function analyzeMetric(array $rest, array $graphql, QueryPreset $query): ApiType
@@ -126,6 +171,12 @@ class ApiTestService
     {
         $key = sprintf(self::CACHE_KEY_PATTERN, $query->query_id, $query->id, $type);
         return Cache::get($key);
+    }
+
+    public function putCachedResult(QueryPreset $query, string $type, array $value): bool
+    {
+        $key = sprintf(self::CACHE_KEY_PATTERN, $query->query_id, $query->id, $type);
+        return Cache::put($key, $value);
     }
 
     private function captureMetrics(callable $requestCallback): array
@@ -187,17 +238,6 @@ class ApiTestService
     {
         $key = sprintf(self::CACHE_KEY_PATTERN, $query->query_id, $query->id, $type);
         Cache::put($key, $data);
-    }
-
-    private function fetchIntegratedFromBothCaches(QueryPreset $query, array $restCache, array $graphqlCache): array
-    {
-        $winner = $this->analyzeMetric($restCache, $graphqlCache, $query);
-        $isRest = $winner === ApiType::Rest;
-
-        $data = $isRest ? $this->fetchRestData($query) : $this->fetchGraphQLData($query);
-        $data['request_type'] = $winner;
-
-        return $data;
     }
 
     private function calculateMinMaxForMetrics(QueryPreset $query): array
