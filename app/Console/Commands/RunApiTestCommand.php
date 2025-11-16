@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
+use App\Jobs\ApiTestRequest;
 use App\Jobs\RunApiTestJob;
 use App\Models\ApiTest;
 use App\Models\Query;
@@ -44,7 +45,7 @@ class RunApiTestCommand extends Command
 
                 foreach (Query::all()->shuffle() as $query) {
                     $this->info("Running query: {$query->name}");
-                    $this->executeQueryTests($query);
+                    $this->dispatchQueryTests($query);
                 }
             }
 
@@ -76,6 +77,20 @@ class RunApiTestCommand extends Command
             $this->line('Integrated: menggunakan ' . $integratedData['request_type']->value . ' API');
         }
         $this->logTestResult('Integrated', $integratedData);
+    }
+
+    private function dispatchQueryTests(Query $query): void
+    {
+        $preset = $query->activePreset;
+
+        $this->line('Dispatching REST request for ' . $query->name);
+        ApiTestRequest::dispatch(ApiType::Rest, $this->apiTest, $preset);
+
+        $this->line('Dispatching GraphQL request for ' . $query->name);
+        ApiTestRequest::dispatch(ApiType::Graphql, $this->apiTest, $preset);
+
+        $this->line('Dispatching Integrated request for ' . $query->name);
+        ApiTestRequest::dispatch(ApiType::Integrated, $this->apiTest, $preset);
     }
 
     private function logTestResult(string $apiType, array $data): void

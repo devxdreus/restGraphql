@@ -5,10 +5,12 @@ namespace App\Services;
 use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use App\Models\ApiTest;
+use App\Models\ApiTestResult;
 use App\Models\QueryPreset;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class ApiTestService
 {
@@ -40,7 +42,7 @@ class ApiTestService
         );
     }
 
-    public function fetchRestData(ApiTest $apiTest, QueryPreset $query): array
+    public function fetchRestData(ApiTest $apiTest, QueryPreset $query): ApiTestResult
     {
         try {
             $metrics = $this->captureMetrics(function () use ($query) {
@@ -49,7 +51,7 @@ class ApiTestService
             });
 
             if ($metrics['response']->failed()) {
-                return $this->storeTestResult($apiTest, $query, ApiType::Rest, ApiStatusType::Failed);
+                return $this->storeTestResult($apiTest, $query, ApiType::Rest, ApiStatusType::Failed, $metrics);
             }
 
             return $this->storeTestResult(
@@ -60,11 +62,12 @@ class ApiTestService
                 $metrics
             );
         } catch (\Exception $e) {
+            Log::error('Rest error : ' . $e->getMessage());
             return $this->storeTestResult($apiTest, $query, ApiType::Rest, ApiStatusType::Failed);
         }
     }
 
-    public function fetchGraphQLData(ApiTest $apiTest, QueryPreset $query): array
+    public function fetchGraphQLData(ApiTest $apiTest, QueryPreset $query): ApiTestResult
     {
         try {
             $metrics = $this->captureMetrics(function () use ($query) {
@@ -73,7 +76,7 @@ class ApiTestService
             });
 
             if ($metrics['response']->failed() || isset($metrics['response']['errors'])) {
-                return $this->storeTestResult($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed);
+                return $this->storeTestResult($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed, $metrics);
             }
 
             return $this->storeTestResult(
@@ -84,39 +87,43 @@ class ApiTestService
                 $metrics
             );
         } catch (\Exception $e) {
+            Log::error('Graphql error : ' . $e->getMessage());
             return $this->storeTestResult($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed);
         }
     }
 
-    public function fetchIntegrated(ApiTest $apiTest, QueryPreset $query): array
+    public function fetchIntegrated(ApiTest $apiTest, QueryPreset $query): ApiTestResult
     {
         $restCache = $this->getCachedResult($query, 'rest');
         $graphqlCache = $this->getCachedResult($query, 'graphql');
+        Log::debug('rest', $restCache ?? []);
+        Log::debug('graphql', $graphqlCache ?? []);
 
         if ($restCache && $graphqlCache) {
             return $this->fetchIntegratedFromBothCaches($apiTest, $query, $restCache, $graphqlCache);
         }
 
         if ($restCache) {
-            $data = $this->fetchGraphQLData($apiTest, $query);
-            $data['request_type'] = ApiType::Graphql;
-            return $data;
+            $result = $this->fetchGraphQLData($apiTest, $query);
+
+            $result->update(['api_type' => ApiType::Integrated]);
+            return $result;
         }
 
-        $data = $this->fetchRestData($apiTest, $query);
-        $data['request_type'] = ApiType::Rest;
-        return $data;
+        $result = $this->fetchRestData($apiTest, $query);
+        $result->update(['api_type' => ApiType::Integrated]);
+        return $result;
     }
 
-    private function fetchIntegratedFromBothCaches(ApiTest $apiTest, QueryPreset $query, array $restCache, array $graphqlCache): array
+    private function fetchIntegratedFromBothCaches(ApiTest $apiTest, QueryPreset $query, array $restCache, array $graphqlCache): ApiTestResult
     {
         $winner = $this->analyzeMetric($restCache, $graphqlCache, $query);
         $isRest = $winner === ApiType::Rest;
 
-        $data = $isRest ? $this->fetchRestData($apiTest, $query) : $this->fetchGraphQLData($apiTest, $query);
-        $data['request_type'] = $winner;
+        $result = $isRest ? $this->fetchRestData($apiTest, $query) : $this->fetchGraphQLData($apiTest, $query);
 
-        return $data;
+        $result->update(['api_type' => $winner]);
+        return $result;
     }
 
     private function storeTestResult(
@@ -125,27 +132,31 @@ class ApiTestService
         ApiType       $apiType,
         ApiStatusType $status,
                       $metrics = null,
-                      $requestType = null
-    ): array
+    ): ApiTestResult
     {
+        if ($status == ApiStatusType::Failed) {
+            Log::error($apiType->value . ' failed', @$metrics['response']?->collect()->toArray() ?? []);
+        }
         $data = [
             'query_id' => $query->query_id,
             'preset_id' => $query->id,
             'api_type' => $apiType,
             'status' => $status,
-            'request_type' => $requestType ?? $apiType,
+            'request_type' => $apiType,
         ];
 
-        $data['response_time'] = $metrics['response_time'] ?? null;
-        $data['payload_size'] = $metrics['payload_size'] ?? null;
-        $data['mem_usage'] = $metrics['mem_usage'] ?? null;
-        $data['cpu_usage'] = $metrics['cpu_usage'] ?? null;
+        $data = array_merge($data, $metrics ?? []);
 
+        if (isset($data['response'])) {
+            $data['response'] = $data['response']->collect() ?? [];
+        }
+
+        $result = $apiTest->results()->create($data);
+
+        unset($data['response']);
         $this->putCachedResult($query, $apiType->value, $data);
 
-        $data['response'] = $metrics['response']?->collect() ?? null;
-
-        return $apiTest->results()->create($data)->toArray();
+        return $result;
     }
 
     public function analyzeMetric(array $rest, array $graphql, QueryPreset $query): ApiType
@@ -200,7 +211,6 @@ class ApiTestService
             'payload_size' => strlen($response->body()),
             'mem_usage' => $memoryAfter - $memoryBefore,
             'cpu_usage' => $responseTime > 0 ? round(($cpuTime / ($responseTime * 1000)) * 100, 2) : 0,
-            'cpu_time' => $cpuTime,
         ];
     }
 
