@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use Carbon\Carbon;
 use Illuminate\Console\Command;
 
 use Illuminate\Support\Facades\Http;
@@ -48,7 +49,7 @@ class GithubCheckLimit extends Command
                 $this->info('REST API Rate Limit:');
                 $this->info('Limit: ' . $limits['limit']);
                 $this->info('Remaining: ' . $limits['remaining']);
-                $this->info('Reset Time: ' . date('Y-m-d H:i:s', $limits['reset']));
+                $this->info('Reset Time: ' . Carbon::createFromTimestampUTC($limits['reset'])->setTimezone('Asia/Makassar')->format('d-m-Y H:i:s'));
             } else {
                 $this->error('REST API Rate Limit Check: Failed');
                 $this->error('Status: ' . $response->status());
@@ -80,7 +81,7 @@ class GithubCheckLimit extends Command
                 $this->info('GraphQL API Rate Limit:');
                 $this->info('Limit: ' . $limits['limit']);
                 $this->info('Remaining: ' . $limits['remaining']);
-                $this->info('Reset Time: ' . $limits['resetAt']);
+                $this->info('Reset Time: ' . Carbon::createFromTimestampUTC($limits['resetAt'])->setTimezone('Asia/Makassar')->format('d-m-Y H:i:s'));
             } else {
                 $this->error('GraphQL API Rate Limit Check: Failed');
                 $this->error('Status: ' . $response->status());
