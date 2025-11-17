@@ -11,13 +11,13 @@ use Illuminate\Support\Facades\Log;
 
 class RequestExecutor
 {
-    private ApiClient $client;
-    private CacheManager $cacheManager;
-
-    public function __construct()
+    public function __construct(
+        private ApiClient    $client,
+        private CacheManager $cacheManager
+    )
     {
-        $this->client = ApiClient::make();
-        $this->cacheManager = new CacheManager();
+//        $this->client = ApiClient::make();
+//        $this->cacheManager = new CacheManager();
     }
 
     public function fetchRestData(ApiTest $apiTest, QueryPreset $query): ApiTestResult

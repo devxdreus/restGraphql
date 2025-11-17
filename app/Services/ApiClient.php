@@ -8,21 +8,15 @@ use Illuminate\Support\Facades\Http;
 
 class ApiClient
 {
-    public function __construct(
-        private readonly string $token,
-        private readonly string $restUrl,
-        private readonly string $graphqlUrl
-    )
-    {
-    }
+    private readonly string $token;
+    private readonly string $restUrl;
+    private readonly string $graphqlUrl;
 
-    public static function make(): self
+    public function __construct()
     {
-        return new self(
-            config('api.github.token'),
-            config('api.github.endpoint.rest'),
-            config('api.github.endpoint.graphql')
-        );
+        $this->token = config('api.github.token');
+        $this->restUrl = config('api.github.endpoint.rest');
+        $this->graphqlUrl = config('api.github.endpoint.graphql');
     }
 
     public function getRestResponse(string $endpoint): Response

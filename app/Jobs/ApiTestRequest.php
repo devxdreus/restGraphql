@@ -25,20 +25,12 @@ class ApiTestRequest implements ShouldQueue
     {
     }
 
-    public function handle(): void
+    public function handle(RequestExecutor $executor): void
     {
-        $executor = new RequestExecutor();
-
-        if ($this->apiType === ApiType::Rest) {
-            $executor->fetchRestData($this->apiTest, $this->preset);
-        }
-
-        if ($this->apiType === ApiType::Graphql) {
-            $executor->fetchGraphQLData($this->apiTest, $this->preset);
-        }
-
-        if ($this->apiType === ApiType::Integrated) {
-            $executor->fetchIntegrated($this->apiTest, $this->preset);
-        }
+        match ($this->apiType) {
+            ApiType::Rest => $executor->fetchRestData($this->apiTest, $this->preset),
+            ApiType::Graphql => $executor->fetchGraphQLData($this->apiTest, $this->preset),
+            ApiType::Integrated => $executor->fetchIntegrated($this->apiTest, $this->preset),
+        };
     }
 }
