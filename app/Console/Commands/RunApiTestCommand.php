@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Services\ApiTestService;
+use App\Services\TestDispatcher;
 use Illuminate\Console\Command;
 
 class RunApiTestCommand extends Command
@@ -13,18 +13,17 @@ class RunApiTestCommand extends Command
 
     public function handle(): int
     {
-        $count = (int)$this->option('count');
-        $this->info("Running API test with {$count} iterations");
-
+        $this->info('Checking github limit...');
         $this->call('github:limit');
 
+        $count = (int)$this->option('count');
+        $this->info("Running API test with {$count} iterations");
         $this->line('Dispatching Tests...');
 
-        ApiTestService::make()->dispatchTests($count);
+        (new TestDispatcher())->dispatchTests($count);
 
         $this->info("API test completed successfully");
 
         return self::SUCCESS;
     }
-
 }

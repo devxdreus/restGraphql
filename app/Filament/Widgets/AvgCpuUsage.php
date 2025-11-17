@@ -41,6 +41,7 @@ class AvgCpuUsage extends TableWidget
 
         return $table
             ->records(fn(): array => $data->toArray())
+            ->poll('3s')
             ->columns([
                 TextColumn::make('query_name')
                     ->label('Query'),

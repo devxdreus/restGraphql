@@ -5,17 +5,18 @@ namespace App\Jobs;
 use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\QueryPreset;
-use App\Services\ApiTestService;
+use App\Services\RequestExecutor;
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 
 class ApiTestRequest implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct(
         public ApiType     $apiType,
         public ApiTest     $apiTest,
@@ -24,21 +25,20 @@ class ApiTestRequest implements ShouldQueue
     {
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(): void
     {
+        $executor = new RequestExecutor();
+
         if ($this->apiType === ApiType::Rest) {
-            ApiTestService::make()->fetchRestData($this->apiTest, $this->preset);
+            $executor->fetchRestData($this->apiTest, $this->preset);
         }
 
         if ($this->apiType === ApiType::Graphql) {
-            ApiTestService::make()->fetchGraphQLData($this->apiTest, $this->preset);
+            $executor->fetchGraphQLData($this->apiTest, $this->preset);
         }
 
         if ($this->apiType === ApiType::Integrated) {
-            ApiTestService::make()->fetchIntegrated($this->apiTest, $this->preset);
+            $executor->fetchIntegrated($this->apiTest, $this->preset);
         }
     }
 }
