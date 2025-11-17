@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
+use App\Jobs\ApiTestRequest;
 use App\Models\ApiTest;
 use App\Models\ApiTestResult;
+use App\Models\Query;
 use App\Models\QueryPreset;
 use Illuminate\Http\Client\Response;
 use Illuminate\Support\Facades\Cache;
@@ -25,6 +27,8 @@ class ApiTestService
         'cpu_usage' => 0.1,
     ];
 
+    public ApiTest $apiTest;
+
     public function __construct(
         private readonly string $token,
         private readonly string $restUrl,
@@ -40,6 +44,37 @@ class ApiTestService
             config('api.github.endpoint.rest'),
             config('api.github.endpoint.graphql')
         );
+    }
+
+    public function dispatchTests(int $count = 1): ApiTest
+    {
+        Cache::flush();
+
+        $this->apiTest = ApiTest::create(['count' => $count]);
+
+        for ($i = 1; $i <= $count; $i++) {
+            foreach (Query::all()->shuffle() as $query) {
+                $this->dispatchQueryTests($query);
+            }
+        }
+
+        $this->apiTest->update([
+            'status' => ApiStatusType::Success,
+            'completed_at' => now(),
+        ]);
+
+        return $this->apiTest;
+    }
+
+    public function dispatchQueryTests(Query $query): void
+    {
+        $preset = $query->activePreset;
+
+        ApiTestRequest::dispatch(ApiType::Rest, $this->apiTest, $preset);
+
+        ApiTestRequest::dispatch(ApiType::Graphql, $this->apiTest, $preset);
+
+        ApiTestRequest::dispatch(ApiType::Integrated, $this->apiTest, $preset);
     }
 
     public function fetchRestData(ApiTest $apiTest, QueryPreset $query): ApiTestResult
