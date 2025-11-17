@@ -94,25 +94,15 @@ class ApiTestService
 
     public function fetchIntegrated(ApiTest $apiTest, QueryPreset $query): ApiTestResult
     {
-        $restCache = $this->getCachedResult($query, 'rest');
-        $graphqlCache = $this->getCachedResult($query, 'graphql');
-        Log::debug('rest', $restCache ?? []);
-        Log::debug('graphql', $graphqlCache ?? []);
-
-        if ($restCache && $graphqlCache) {
-            return $this->fetchIntegratedFromBothCaches($apiTest, $query, $restCache, $graphqlCache);
+        while (!$restCache = $this->getCachedResult($query, 'rest')) {
+            $this->fetchRestData($apiTest, $query);
         }
 
-        if ($restCache) {
-            $result = $this->fetchGraphQLData($apiTest, $query);
-
-            $result->update(['api_type' => ApiType::Integrated]);
-            return $result;
+        while (!$graphqlCache = $this->getCachedResult($query, 'graphql')) {
+            $this->fetchGraphQLData($apiTest, $query);
         }
 
-        $result = $this->fetchRestData($apiTest, $query);
-        $result->update(['api_type' => ApiType::Integrated]);
-        return $result;
+        return $this->fetchIntegratedFromBothCaches($apiTest, $query, $restCache, $graphqlCache);
     }
 
     private function fetchIntegratedFromBothCaches(ApiTest $apiTest, QueryPreset $query, array $restCache, array $graphqlCache): ApiTestResult
@@ -120,9 +110,10 @@ class ApiTestService
         $winner = $this->analyzeMetric($restCache, $graphqlCache, $query);
         $isRest = $winner === ApiType::Rest;
 
+
         $result = $isRest ? $this->fetchRestData($apiTest, $query) : $this->fetchGraphQLData($apiTest, $query);
 
-        $result->update(['api_type' => $winner]);
+        $result->update(['api_type' => ApiType::Integrated]);
         return $result;
     }
 
