@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+use App\Enums\QueryType;
 use App\Filament\Resources\QueryResource\Pages;
 use App\Filament\Resources\QueryResource\RelationManagers\PresetsRelationManager;
 use App\Models\Query;
@@ -10,9 +11,11 @@ use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteAction;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Resources\Resource;
+use Filament\Schemas\Components\Fieldset;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
@@ -33,15 +36,24 @@ class QueryResource extends Resource
                 TextInput::make('name')
                     ->required(),
 
+                Select::make('type')
+                    ->options(QueryType::class)
+                    ->required(),
+
+
                 TextInput::make('description'),
 
-                TextEntry::make('created_at')
-                    ->label('Created Date')
-                    ->state(fn(?Query $record): string => $record?->created_at?->diffForHumans() ?? '-'),
+                Fieldset::make('')
+                    ->columnSpanFull()
+                    ->schema([
+                        TextEntry::make('created_at')
+                            ->label('Created Date')
+                            ->state(fn(?Query $record): string => $record?->created_at?->diffForHumans() ?? '-'),
 
-                TextEntry::make('updated_at')
-                    ->label('Last Modified Date')
-                    ->state(fn(?Query $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                        TextEntry::make('updated_at')
+                            ->label('Last Modified Date')
+                            ->state(fn(?Query $record): string => $record?->updated_at?->diffForHumans() ?? '-'),
+                    ])
             ]);
     }
 
@@ -50,6 +62,10 @@ class QueryResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('name')
+                    ->searchable()
+                    ->sortable(),
+
+                TextColumn::make('type')
                     ->searchable()
                     ->sortable(),
 

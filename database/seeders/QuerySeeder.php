@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\QueryType;
 use App\Models\Query;
 use Illuminate\Database\Seeder;
 
@@ -9,9 +10,13 @@ class QuerySeeder extends Seeder
 {
     public function run(): void
     {
+        $simple = QueryType::Simple->value;
+        $complex = QueryType::Complex->value;
+
         $queries = [
             'Q1' => [
                 'name' => 'Q1',
+                'type' => $simple,
                 'description' => 'Query to search repositories with stars > 1',
                 'rest_query' => 'search/repositories?q=stars:>1&sort=stars&order=desc&per_page=100',
                 'graphql_query' => 'query {
@@ -27,6 +32,7 @@ class QuerySeeder extends Seeder
             ],
             'Q2' => [
                 'name' => 'Q2',
+                'type' => $complex,
                 'description' => 'Top 10 repos with stars > 1000 and their PR details',
                 'rest_query' => 'search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=10',
                 'graphql_query' => 'query {
@@ -51,6 +57,7 @@ class QuerySeeder extends Seeder
             ],
             'Q3' => [
                 'name' => 'Q3',
+                'type' => $simple,
                 'description' => 'Comments on PR #2 of facebook/react',
                 'rest_query' => 'repos/facebook/react/pulls/2/comments',
                 'graphql_query' => 'query {
@@ -66,6 +73,7 @@ class QuerySeeder extends Seeder
             ],
             'Q4' => [
                 'name' => 'Q4',
+                'type' => $simple,
                 'description' => 'Top 5 repos with stars > 1 (name & url)',
                 'rest_query' => 'search/repositories?q=stars:>1&sort=stars&order=desc&per_page=5',
                 'graphql_query' => 'query {
@@ -82,6 +90,7 @@ class QuerySeeder extends Seeder
             ],
             'Q5' => [
                 'name' => 'Q5',
+                'type' => $simple,
                 'description' => 'Repos with stars > 10000 and repo metadata counts (refs, issues, releases, users, commits)',
                 'rest_query' => 'search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=7',
                 'graphql_query' => 'query {
@@ -108,6 +117,7 @@ class QuerySeeder extends Seeder
             ],
             'Q6' => [
                 'name' => 'Q6',
+                'type' => $complex,
                 'description' => 'Closed issues with label bug in facebook/react (latest 100)',
                 'rest_query' => 'repos/facebook/react/issues?state=closed&labels=bug&per_page=100&page=1',
                 'graphql_query' => 'query {
@@ -121,6 +131,7 @@ class QuerySeeder extends Seeder
             ],
             'Q7' => [
                 'name' => 'Q7',
+                'type' => $simple,
                 'description' => 'Comments on issue #10 for a given repo (fallback: facebook/react)',
                 'rest_query' => 'repos/facebook/react/issues/10/comments',
                 'graphql_query' => 'query {
@@ -138,6 +149,7 @@ class QuerySeeder extends Seeder
             ],
             'Q8' => [
                 'name' => 'Q8',
+                'type' => $simple,
                 'description' => 'Java repositories with stars > 10 (top 50) + metadata',
                 'rest_query' => 'search/repositories?q=language:java+stars:>10&sort=stars&order=desc',
                 'graphql_query' => 'query {
@@ -158,6 +170,7 @@ class QuerySeeder extends Seeder
             ],
             'Q9' => [
                 'name' => 'Q9',
+                'type' => $simple,
                 'description' => 'Stargazer count for facebook/react',
                 'rest_query' => 'repos/facebook/react',
                 'graphql_query' => 'query {
@@ -169,6 +182,7 @@ class QuerySeeder extends Seeder
             ],
             'Q10' => [
                 'name' => 'Q10',
+                'type' => $simple,
                 'description' => 'First 100 repos with stars >= 1000 (names only)',
                 'rest_query' => 'search/repositories?q=stars:>=1000&per_page=100',
                 'graphql_query' => 'query {
@@ -182,6 +196,7 @@ class QuerySeeder extends Seeder
             ],
             'Q11' => [
                 'name' => 'Q11',
+                'type' => $complex,
                 'description' => 'Commit history total on default branch of facebook/react (REST grabs latest commit)',
                 'rest_query' => 'repos/facebook/react/commits?per_page=1',
                 'graphql_query' => 'query {
@@ -199,6 +214,7 @@ class QuerySeeder extends Seeder
             ],
             'Q12' => [
                 'name' => 'Q12',
+                'type' => $simple,
                 'description' => 'Repos with stars > 10000 (first 8) + releases count, stargazers, languages',
                 'rest_query' => 'search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=8',
                 'graphql_query' => 'query {
@@ -217,6 +233,7 @@ class QuerySeeder extends Seeder
             ],
             'Q13' => [
                 'name' => 'Q13',
+                'type' => $complex,
                 'description' => 'Open issues labeled bug across GitHub',
                 'rest_query' => 'search/issues?q=is:issue+is:open+label:bug',
                 'graphql_query' => 'query {
@@ -235,6 +252,7 @@ class QuerySeeder extends Seeder
             ],
             'Q14' => [
                 'name' => 'Q14',
+                'type' => $complex,
                 'description' => 'Issue #2 (title + comments) for facebook/react',
                 'rest_query' => 'repos/facebook/react/issues/10/comments',
                 'graphql_query' => 'query {
@@ -257,6 +275,7 @@ class QuerySeeder extends Seeder
         $queryData = collect($queries)->map(function ($query, $key) {
             return [
                 'name' => $query['name'],
+                'type' => $query['type'],
                 'description' => $query['description'],
             ];
         })->values()->toArray();
