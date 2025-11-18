@@ -15,6 +15,7 @@ use App\Filament\Resources\ApiTestResource\Widgets\ResourceUtilizationRadarChart
 use App\Filament\Resources\ApiTestResource\Widgets\QueryResponseTimeComparisonChart;
 use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeDistributionChart;
 use App\Filament\Resources\ApiTestResource\Widgets\SuccessRateWidget;
+use App\Filament\Widgets\AvgAllMetric;
 use App\Filament\Widgets\AvgCpuUsage;
 use App\Filament\Widgets\AvgMemUsage;
 use App\Filament\Widgets\AvgPayloadSize;
@@ -47,6 +48,7 @@ class ViewApiTest extends ViewRecord
             AvgMemUsage::class,
             AvgCpuUsage::class,
             AvgResponseTimeByQueryType::class,
+            AvgAllMetric::class,
             QueryResponseTimeComparisonChart::class,
             ResponseTimeDistributionChart::class,
             QueryPayloadSizeComparisonChart::class,

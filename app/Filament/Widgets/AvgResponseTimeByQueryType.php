@@ -20,8 +20,6 @@ class AvgResponseTimeByQueryType extends TableWidget
 {
     protected static ?string $heading = 'Rata-Rata Waktu Respons per Kategori Skenario';
 
-    protected int|string|array $columnStart = 2;
-
     public function table(Table $table): Table
     {
         $data = [];
