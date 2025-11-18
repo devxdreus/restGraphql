@@ -19,6 +19,7 @@ use App\Filament\Widgets\AvgCpuUsage;
 use App\Filament\Widgets\AvgMemUsage;
 use App\Filament\Widgets\AvgPayloadSize;
 use App\Filament\Widgets\AvgResponseTime;
+use App\Filament\Widgets\AvgResponseTimeByQueryType;
 use App\Models\Query;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\Select;
@@ -40,11 +41,12 @@ class ViewApiTest extends ViewRecord
     protected function getFooterWidgets(): array
     {
         return [
+            SuccessRateWidget::class,
             AvgResponseTime::class,
             AvgPayloadSize::class,
             AvgMemUsage::class,
             AvgCpuUsage::class,
-            SuccessRateWidget::class,
+            AvgResponseTimeByQueryType::class,
             QueryResponseTimeComparisonChart::class,
             ResponseTimeDistributionChart::class,
             QueryPayloadSizeComparisonChart::class,

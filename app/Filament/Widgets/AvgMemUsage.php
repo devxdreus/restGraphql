@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PerformanceBadge;
 use App\Models\ApiTest;
 use App\Models\ApiTestResult;
 use App\Models\Query;
@@ -58,40 +59,18 @@ class AvgMemUsage extends TableWidget
                     ->label('Integrated')
                     ->formatStateUsing(fn($state) => Number::format($state / 1024, 2) . ' KB')
                     ->badge()
-                    ->color(fn($record) => $this->getColor($record))
-                    ->icon(fn($record) => $this->getIcon($record))
+                    ->color(fn($record) => PerformanceBadge::getColor(
+                        (float)$record['avg_integrated_mem_usage'] ?? 0,
+                        (float)$record['avg_rest_mem_usage'] ?? 0,
+                        (float)$record['avg_graphql_mem_usage'] ?? 0
+                    ))
+                    ->icon(fn($record) => PerformanceBadge::getIcon(
+                        (float)$record['avg_integrated_mem_usage'] ?? 0,
+                        (float)$record['avg_rest_mem_usage'] ?? 0,
+                        (float)$record['avg_graphql_mem_usage'] ?? 0
+                    ))
                 ,
             ])
             ->paginated(false);
-    }
-
-    private function getColor(array $record): string
-    {
-        if ($record['avg_integrated_mem_usage'] < $record['avg_rest_mem_usage'] &&
-            $record['avg_integrated_mem_usage'] < $record['avg_graphql_mem_usage']) {
-            return 'success';
-        }
-
-        if ($record['avg_integrated_mem_usage'] < $record['avg_rest_mem_usage'] ||
-            $record['avg_integrated_mem_usage'] < $record['avg_graphql_mem_usage']) {
-            return 'warning';
-        }
-
-        return 'danger';
-    }
-
-    private function getIcon(array $record): string|Heroicon
-    {
-        if ($record['avg_integrated_mem_usage'] < $record['avg_rest_mem_usage'] &&
-            $record['avg_integrated_mem_usage'] < $record['avg_graphql_mem_usage']) {
-            return Heroicon::OutlinedArrowTrendingDown;
-        }
-
-        if ($record['avg_integrated_mem_usage'] < $record['avg_rest_mem_usage'] ||
-            $record['avg_integrated_mem_usage'] < $record['avg_graphql_mem_usage']) {
-            return Heroicon::OutlinedArrowTrendingDown;
-        }
-
-        return Heroicon::OutlinedArrowTrendingUp;
     }
 }

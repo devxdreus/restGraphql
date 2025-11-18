@@ -2,6 +2,7 @@
 
 namespace App\Filament\Widgets;
 
+use App\Helpers\PerformanceBadge;
 use App\Models\ApiTest;
 use App\Models\ApiTestResult;
 use App\Models\Query;
@@ -57,40 +58,18 @@ class AvgResponseTime extends TableWidget
                     ->label('Integrated')
                     ->formatStateUsing(fn($state) => (int)$state . 'ms')
                     ->badge()
-                    ->color(fn($record) => $this->getColor($record))
-                    ->icon(fn($record) => $this->getIcon($record))
+                    ->color(fn($record) => PerformanceBadge::getColor(
+                        $record['avg_integrated_response_time'] ?? 0,
+                        $record['avg_rest_response_time'] ?? 0,
+                        $record['avg_graphql_response_time'] ?? 0
+                    ))
+                    ->icon(fn($record) => PerformanceBadge::getIcon(
+                        $record['avg_integrated_response_time'] ?? 0,
+                        $record['avg_rest_response_time'] ?? 0,
+                        $record['avg_graphql_response_time'] ?? 0
+                    ))
                 ,
             ])
             ->paginated(false);
-    }
-
-    private function getColor(array $record): string
-    {
-        if ($record['avg_integrated_response_time'] < $record['avg_rest_response_time'] &&
-            $record['avg_integrated_response_time'] < $record['avg_graphql_response_time']) {
-            return 'success';
-        }
-
-        if ($record['avg_integrated_response_time'] < $record['avg_rest_response_time'] ||
-            $record['avg_integrated_response_time'] < $record['avg_graphql_response_time']) {
-            return 'warning';
-        }
-
-        return 'danger';
-    }
-
-    private function getIcon(array $record): string|Heroicon
-    {
-        if ($record['avg_integrated_response_time'] < $record['avg_rest_response_time'] &&
-            $record['avg_integrated_response_time'] < $record['avg_graphql_response_time']) {
-            return Heroicon::OutlinedArrowTrendingDown;
-        }
-
-        if ($record['avg_integrated_response_time'] < $record['avg_rest_response_time'] ||
-            $record['avg_integrated_response_time'] < $record['avg_graphql_response_time']) {
-            return Heroicon::OutlinedArrowTrendingDown;
-        }
-
-        return Heroicon::OutlinedArrowTrendingUp;
     }
 }
