@@ -3,8 +3,8 @@ services:
     build:
       target: development
       args:
-        USER_ID: 1000
-        GROUP_ID: 1000
+        USER_ID: ${SPIN_USER_ID}
+        GROUP_ID: ${SPIN_GROUP_ID}
     restart: unless-stopped
     working_dir: /var/www/html
     volumes:
