@@ -14,6 +14,8 @@ FROM serversideup/php:8.4-fpm-nginx-alpine AS base
 USER root
 RUN install-php-extensions intl
 
+WORKDIR /var/www/html
+
 ############################################
 # Development Image
 ############################################
@@ -22,8 +24,8 @@ FROM base AS development
 # We can pass USER_ID and GROUP_ID as build arguments
 # to ensure the www-data user has the same UID and GID
 # as the user running Docker.
-ARG USER_ID
-ARG GROUP_ID
+ARG USER_ID=1000
+ARG GROUP_ID=1000
 
 # Switch to root so we can set the user ID and group ID
 USER root
