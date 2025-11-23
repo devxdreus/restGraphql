@@ -30,8 +30,7 @@ class TestDispatcher
         }
 
         $apiTest->update([
-            'status' => ApiStatusType::Success,
-            'completed_at' => now(),
+            'status' => ApiStatusType::Processing,
         ]);
 
         return $apiTest;

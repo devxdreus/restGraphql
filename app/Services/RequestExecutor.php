@@ -6,6 +6,7 @@ use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use App\Models\ApiTest;
 use App\Models\ApiTestResult;
+use App\Models\Query;
 use App\Models\QueryPreset;
 use Illuminate\Support\Facades\Log;
 
@@ -124,6 +125,19 @@ class RequestExecutor
         unset($cachedData['response']);
         $this->cacheManager->putCachedResult($query, $apiType->value, $cachedData);
 
+        $this->markIfCompleted($apiTest);
+
         return $result;
+    }
+
+    private function markIfCompleted(ApiTest $apiTest): void
+    {
+        $expectedTotal = $apiTest->count * Query::count() * count(ApiType::values());
+        if ($expectedTotal == $apiTest->results()->count()) {
+            $apiTest->update([
+                'status' => ApiStatusType::Success,
+                'completed_at' => now(),
+            ]);
+        }
     }
 }

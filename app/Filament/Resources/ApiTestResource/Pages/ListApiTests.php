@@ -17,7 +17,6 @@ class ListApiTests extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-//            CreateAction::make(),
             Action::make('startTest')
                 ->modalWidth(Width::Small)
                 ->modalSubmitActionLabel('Start')

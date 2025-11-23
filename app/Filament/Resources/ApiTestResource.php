@@ -87,12 +87,14 @@ class ApiTestResource extends Resource
 
                 TextColumn::make('duration')
                     ->label('Durasi')
+                    ->placeholder('Processing')
                     ->formatStateUsing(fn($state) => CarbonInterval::seconds($state)->cascade()->forHumans()),
 
                 TextColumn::make('created_at')
                     ->label('Test Mulai')
                     ->dateTime(),
             ])
+            ->poll('3s')
             ->defaultSort('created_at', 'desc')
             ->filters([
                 //
