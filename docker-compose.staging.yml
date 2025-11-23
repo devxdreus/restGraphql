@@ -9,9 +9,9 @@ services:
     volumes:
       # Mount the Docker socket as read-only so Traefik can listen to events
       - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./.infrastructure/conf/traefik/prod/traefik.yml:/traefik.yml:ro
-      - ./.infrastructure/conf/traefik/prod/traefik-certs.yml:/traefik-certs.yml
-      - ./.infrastructure/conf/traefik/prod/certificates/:/certificates
+      - ./.infrastructure/conf/traefik/dev/traefik.yml:/traefik.yml:ro
+      - ./.infrastructure/conf/traefik/dev/traefik-certs.yml:/traefik-certs.yml
+      - ./.infrastructure/conf/traefik/dev/certificates/:/certificates
     restart: unless-stopped
 
   php:
