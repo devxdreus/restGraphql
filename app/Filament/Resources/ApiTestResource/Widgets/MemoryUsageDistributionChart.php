@@ -13,6 +13,8 @@ class MemoryUsageDistributionChart extends ChartWidget
 
     public ?ApiTest $record = null;
 
+    public ?string $filter = 'all';
+
     protected function getData(): array
     {
         $queries = Query::all();
@@ -21,11 +23,16 @@ class MemoryUsageDistributionChart extends ChartWidget
         $data = [];
         foreach ($apiTypes as $apiType) {
             foreach ($queries as $query) {
-                $data[$apiType][] = (int)$query->testResults()
+                $q = $query->testResults()
                     ->success()
                     ->where('api_test_id', $this->record->id)
-                    ->where('api_type', $apiType)
-                    ->orderBy('query_id')
+                    ->where('api_type', $apiType);
+
+                if ($this->filter != 'all') {
+                    $q->where('mem_usage', '>', 0);
+                }
+
+                $data[$apiType][] = (int)$q->orderBy('query_id')
                     ->avg('mem_usage');
             }
         }
@@ -55,6 +62,14 @@ class MemoryUsageDistributionChart extends ChartWidget
                     'borderWidth' => 1,
                 ]
             ]
+        ];
+    }
+
+    protected function getFilters(): ?array
+    {
+        return [
+            'all' => 'All',
+            'clean' => 'Bersih'
         ];
     }
 
