@@ -1,4 +1,19 @@
 services:
+  traefik:
+    image: traefik:v3.2
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - web_public
+    volumes:
+      # Mount the Docker socket as read-only so Traefik can listen to events
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./.infrastructure/conf/traefik/prod/traefik.yml:/traefik.yml:ro
+      - ./.infrastructure/conf/traefik/prod/traefik-certs.yml:/traefik-certs.yml
+      - ./.infrastructure/conf/traefik/prod/certificates/:/certificates
+    restart: unless-stopped
+
   php:
     build:
       target: development
@@ -10,10 +25,10 @@ services:
     volumes:
       - .:/var/www/html/
     networks:
-      - base_production
+      - web_public
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.laravel.rule=HostRegexp(`rest-graphql.test`)"
+      - "traefik.http.routers.laravel.rule=HostRegexp(`${APP_DOMAIN}`)"
       - "traefik.http.routers.laravel.entrypoints=web"
       - "traefik.http.services.laravel.loadbalancer.server.port=8080"
       - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
@@ -28,7 +43,7 @@ services:
     volumes:
       - .:/var/www/html/
     networks:
-      - base_production
+      - web_public
     depends_on:
       - redis
     restart: unless-stopped
@@ -39,14 +54,34 @@ services:
       - .:/usr/src/app/
     working_dir: /usr/src/app/
     networks:
-      - base_production
+      - web_public
+
+  postgres:
+    image: postgres:16.0
+    networks:
+      - web_public
+    volumes:
+      - ./.infrastructure/volume_data/postgres-prod/database_data/:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: "${DB_ROOT_PASSWORD}"
+      POSTGRES_DB: "${DB_POSTGRES_DATABASE}"
+      POSTGRES_USER: "${DB_POSTGRES_USERNAME}"
+    ports:
+      - "${FORWARD_PORT_POSTGRES:-5432}:5432"
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-U", "${DB_POSTGRES_USERNAME}" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    restart: unless-stopped
 
   redis:
     image: redis:latest
     volumes:
       - redis_data:/data
     networks:
-      - base_production
+      - web_public
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 5s
@@ -55,8 +90,7 @@ services:
     restart: unless-stopped
 
 networks:
-  base_production:
-    external: true
+  web_public:
 
 volumes:
   redis_data:
