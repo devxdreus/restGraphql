@@ -12,6 +12,11 @@ use Illuminate\Support\Facades\Log;
 
 class TestDispatcher
 {
+    public static function make(): TestDispatcher
+    {
+        return new self();
+    }
+
     public function dispatchTests(int $count = 1): ApiTest
     {
         Cache::flush();
