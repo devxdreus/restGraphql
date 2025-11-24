@@ -17,7 +17,7 @@ class ResponseFormatter
         ApiType       $apiType,
         ApiStatusType $status,
                       $metrics = null,
-        array         $extraData = []
+        ApiType       $requestType = null,
     ): ApiTestResult
     {
         if ($status == ApiStatusType::Failed) {
@@ -29,8 +29,8 @@ class ResponseFormatter
             'preset_id' => $query->id,
             'api_type' => $apiType,
             'status' => $status,
-            'request_type' => $apiType,
-        ], $metrics ?? [], $extraData);
+            'request_type' => $requestType ?? $apiType,
+        ], $metrics ?? []);
 
         if (isset($data['response'])) {
             $data['response'] = $data['response']->collect() ?? [];

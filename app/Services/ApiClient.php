@@ -19,6 +19,11 @@ class ApiClient
         $this->graphqlUrl = config('api.github.endpoint.graphql');
     }
 
+    public static function make(): ApiClient
+    {
+        return new self();
+    }
+
     public function getRestResponse(string $endpoint): Response
     {
         return Http::withToken($this->token)
