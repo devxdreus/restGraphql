@@ -29,9 +29,13 @@ services:
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.laravel.rule=HostRegexp(`${APP_DOMAIN}`)"
-      - "traefik.http.routers.laravel.entrypoints=web"
-      - "traefik.http.services.laravel.loadbalancer.server.port=8080"
-      - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
+      #      - "traefik.http.routers.laravel.entrypoints=web"
+      #      - "traefik.http.services.laravel.loadbalancer.server.port=8080"
+      #      - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
+      - "traefik.http.routers.my-php-app.entrypoints=websecure"
+      #      - "traefik.http.routers.my-php-app.tls=true"
+      - "traefik.http.services.my-php-app.loadbalancer.server.port=8443"
+      - "traefik.http.services.my-php-app.loadbalancer.server.scheme=https"
 
   horizon:
     build:
