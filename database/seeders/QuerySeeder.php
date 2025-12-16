@@ -17,13 +17,13 @@ class QuerySeeder extends Seeder
             'Q1' => [
                 'name' => 'Q1',
                 'type' => $simple,
-                'description' => 'Query to search repositories with stars > 1',
-                'rest_query' => 'search/repositories?q=stars:>1&sort=stars&order=desc&per_page=100',
+                'description' => 'Name of the top-100 C projects by stars',
+                'rest_query' => 'search/repositories?q=stars:0..*+language:c&sort=stars&order=desc&page=1&per_page=100',
                 'graphql_query' => 'query {
-    search(query: "stars:>1", type: REPOSITORY, first: 100) {
+    search(query:"stars:0..* language:c", type: REPOSITORY,first:100) {
         nodes {
             ... on Repository {
-                name
+                nameWithOwner
             }
         }
     }
@@ -33,22 +33,21 @@ class QuerySeeder extends Seeder
             'Q2' => [
                 'name' => 'Q2',
                 'type' => $complex,
-                'description' => 'Top 10 repos with stars > 1000 and their PR details',
-                'rest_query' => 'search/repositories?q=stars:>1000&sort=stars&order=desc&per_page=10',
+                'description' => 'Total number and body of the 1K most recent PRs',
+                'rest_query' => 'repos/torvalds/linux/pulls?&state=all&sort=created&direction=desc&page=1&per_page=100',
                 'graphql_query' => 'query {
-    search(query: "stars:>1000", type: REPOSITORY, first: 10) {
-        nodes {
-            ... on Repository {
-                name
-                pullRequests(first: 100) {
-                    totalCount
-                    nodes {
-                        title
-                        body
-                        createdAt
-                        author { login }
-                    }
+    repository(owner: "torvalds", name: "linux"){
+        pullRequests(first:100, orderBy:{field:CREATED_AT, direction:DESC}){
+            pageInfo{
+                hasNextPage
+                endCursor
+            }
+            nodes{
+                repository{
+                    nameWithOwner
                 }
+                title
+                number
             }
         }
     }
@@ -58,41 +57,50 @@ class QuerySeeder extends Seeder
             'Q3' => [
                 'name' => 'Q3',
                 'type' => $simple,
-                'description' => 'Comments on PR #2 of facebook/react',
-                'rest_query' => 'repos/facebook/react/pulls/2/comments',
+                'description' => 'Body of comments from PR',
+                'rest_query' => 'repos/torvalds/linux/pulls/988',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        pullRequest(number: 2) {
-            comments(first: 100) {
-                nodes { body }
-            }
+  repository(owner: "torvalds", name: "linux") {
+    pullRequest(number: 988) {
+      number
+      title
+      comments(first: 100) {
+        pageInfo {
+          hasNextPage
+          endCursor
         }
+        nodes {
+          bodyText
+        }
+      }
     }
+  }
 }
             ',
             ],
             'Q4' => [
                 'name' => 'Q4',
                 'type' => $simple,
-                'description' => 'Top 5 repos with stars > 1 (name & url)',
-                'rest_query' => 'search/repositories?q=stars:>1&sort=stars&order=desc&per_page=5',
+                'description' => 'Name and URL of the top-5 projects by stars (in any programming language)',
+                'rest_query' => 'search/repositories?q=stars:0..*&sort=stars&order=desc&page=1&per_page=5',
                 'graphql_query' => 'query {
-    search(query: "stars:>1", type: REPOSITORY, first: 5) {
-        nodes {
-            ... on Repository {
-                name
-                url
-            }
-        }
+  search(query:"stars:0..*", type:REPOSITORY, first:5){
+    nodes{
+      ... on Repository{
+        nameWithOwner
+        url
+        stargazerCount
+      }
     }
+  }
 }
             ',
             ],
             'Q5' => [
                 'name' => 'Q5',
                 'type' => $simple,
-                'description' => 'Repos with stars > 10000 and repo metadata counts (refs, issues, releases, users, commits)',
-                'rest_query' => 'search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=7',
+                'description' => 'number of commits,branches, bugs, releases and contributors',
+                'rest_query' => 'repos/torvalds/linux/commits?q=&page=1&per_page=100',
                 'graphql_query' => 'query {
     search(query: "stars:>10000", type: REPOSITORY, first: 7) {
         nodes {
@@ -118,154 +126,198 @@ class QuerySeeder extends Seeder
             'Q6' => [
                 'name' => 'Q6',
                 'type' => $complex,
-                'description' => 'Closed issues with label bug in facebook/react (latest 100)',
-                'rest_query' => 'repos/facebook/react/issues?state=closed&labels=bug&per_page=100&page=1',
+                'description' => 'Title and body of closed bugs',
+                'rest_query' => 'repos/matplotlib/Matplotlib/issues?q=&state=closed&labels=status:+confirmed+bug&sort=created&direction=asc&page=1&per_page=100',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        issues(states: CLOSED, labels: ["bug"], first: 100, orderBy: {field: CREATED_AT, direction: DESC}) {
-            nodes { title body }
+  repository(owner: "matplotlib", name: "Matplotlib"){
+    issues(labels: "status: confirmed bug", states:CLOSED, first:100){
+      pageInfo{
+        hasNextPage
+        endCursor
+      }
+      totalCount
+        nodes{
+          title
+          body
         }
-    }
+    	}
+  }
 }
             ',
             ],
             'Q7' => [
                 'name' => 'Q7',
                 'type' => $simple,
-                'description' => 'Comments on issue #10 for a given repo (fallback: facebook/react)',
-                'rest_query' => 'repos/facebook/react/issues/10/comments',
+                'description' => 'Body comments of closed bugs',
+                'rest_query' => 'repos/matplotlib/Matplotlib/issues/28551/comments?&page=1&per_page=100',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        issue(number: 10) {
-            comments(first: 100) {
-                nodes {
-                    body
-                }
-            }
-        }
+  search(type: ISSUE, query: "repo:matplotlib/matplotlib in:title [Bug]: Possible issue with Matplotlib 3.9.1 wheel on Windows only" , first: 1) {
+    nodes {
+      ... on Issue {
+        comments(first:100){
+              pageInfo{
+                hasNextPage
+                endCursor
+              }
+              nodes{
+                bodyText
+              }
+          }
+      }
     }
+  }
 }
             ',
             ],
             'Q8' => [
                 'name' => 'Q8',
                 'type' => $simple,
-                'description' => 'Java repositories with stars > 10 (top 50) + metadata',
-                'rest_query' => 'search/repositories?q=language:java+stars:>10&sort=stars&order=desc',
+                'description' => 'Name and URL of Java projects created before Jan, 2012, with 10+ stars, and 1+ commits',
+                'rest_query' => 'search/repositories?q=created:<2012-01-01+pushed:>=2016-07-01+stars:>10+size:>1000&page=1&per_page=100',
                 'graphql_query' => 'query {
-    search(query: "language:java stars:>10", type: REPOSITORY, first: 50) {
-        nodes {
-            ... on Repository {
-                name
-                url
-                description
-                stargazerCount
-                createdAt
-                pushedAt
-            }
-        }
+  search(query:"language:java stars:>10 created:<2012-01-01 pushed:>=2016-07-01 size:>1000", type:REPOSITORY, first:100){
+    pageInfo{
+        hasNextPage
+        endCursor
     }
+    nodes{
+      ... on Repository{
+        nameWithOwner
+        url
+      }
+    }
+  }
 }
             ',
             ],
             'Q9' => [
                 'name' => 'Q9',
                 'type' => $simple,
-                'description' => 'Stargazer count for facebook/react',
-                'rest_query' => 'repos/facebook/react',
+                'description' => 'Number of stars of specific projects',
+                'rest_query' => 'repos/torvalds/linux',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        stargazerCount
+  repository(owner: "torvalds", name: "linux"){
+    stargazers{
+      totalCount
     }
+  }
 }
             ',
             ],
             'Q10' => [
                 'name' => 'Q10',
                 'type' => $simple,
-                'description' => 'First 100 repos with stars >= 1000 (names only)',
-                'rest_query' => 'search/repositories?q=stars:>=1000&per_page=100',
+                'description' => 'Name of repositories with at least 1K stars',
+                'rest_query' => 'search/repositories?q=stars:>=1000&page=1&per_page=100',
                 'graphql_query' => 'query {
-    search(query: "stars:>=1000", type: REPOSITORY, first: 100) {
-        nodes {
-            ... on Repository { name }
-        }
+  search(query:"stars:>1000", type:REPOSITORY, first:100){
+    pageInfo{
+        hasNextPage
+        endCursor
     }
+    nodes{
+      ... on Repository{
+        nameWithOwner
+      }
+    }
+  }
 }
             ',
             ],
             'Q11' => [
                 'name' => 'Q11',
                 'type' => $complex,
-                'description' => 'Commit history total on default branch of facebook/react (REST grabs latest commit)',
-                'rest_query' => 'repos/facebook/react/commits?per_page=1',
+                'description' => 'Number of commits in a repository',
+                'rest_query' => 'repos/torvalds/linux/commits?q=&page=1&per_page=100',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        defaultBranchRef {
-            target {
-                ... on Commit {
-                    history { totalCount }
-                }
+  repository(owner: "torvalds", name: "linux"){
+    ref(qualifiedName:"master"){
+          target{
+            ... on Commit{
+              history{
+                totalCount
+              }
             }
         }
     }
+  }
 }
             ',
             ],
             'Q12' => [
                 'name' => 'Q12',
                 'type' => $simple,
-                'description' => 'Repos with stars > 10000 (first 8) + releases count, stargazers, languages',
-                'rest_query' => 'search/repositories?q=stars:>10000&sort=stars&order=desc&per_page=8',
+                'description' => 'Number of releases, stars, and language of project',
+                'rest_query' => 'repos/torvalds/linux',
                 'graphql_query' => 'query {
-    search(query: "stars:>10000", type: REPOSITORY, first: 8) {
-        nodes {
-            ... on Repository {
-                name
-                releases { totalCount }
-                stargazerCount
-                languages(first: 10) { nodes { name } }
-            }
-        }
+  repository(owner: "bitcoin", name: "bitcoin") {
+    tags: refs(refPrefix: "refs/tags/") {
+      totalCount
     }
+    primaryLanguage {
+      name
+    }
+    stargazers {
+      totalCount
+    }
+  }
 }
             ',
             ],
             'Q13' => [
                 'name' => 'Q13',
                 'type' => $complex,
-                'description' => 'Open issues labeled bug across GitHub',
-                'rest_query' => 'search/issues?q=is:issue+is:open+label:bug',
+                'description' => 'Title, body, date and project name of open issues tagged with a bug tag',
+                'rest_query' => 'search/issues?q=repo:bitcoin/bitcoin+is:issue+label:bug+state:closed+created:>2016-11-07&per_page=100&page=1',
                 'graphql_query' => 'query {
-    search(query: "is:issue is:open label:bug", type: ISSUE, first: 100) {
-        nodes {
-            ... on Issue {
-                title
-                body
-                createdAt
-                repository { name }
-            }
-        }
+  search(
+    query: "repo:bitcoin/bitcoin state:closed created:>2016-11-07 label:bug"
+    type: ISSUE
+    first: 100
+  ) {
+    pageInfo {
+      hasNextPage
+      endCursor
     }
+    nodes {
+      ... on Issue {
+        repository {
+          nameWithOwner
+        }
+        title
+        body
+        createdAt
+      }
+    }
+  }
 }
             ',
             ],
             'Q14' => [
                 'name' => 'Q14',
                 'type' => $complex,
-                'description' => 'Issue #2 (title + comments) for facebook/react',
-                'rest_query' => 'repos/facebook/react/issues/10/comments',
+                'description' => 'Body comments of issue',
+                'rest_query' => 'repos/matplotlib/matplotlib/issues/28551/comments?per_page=100&page=1',
                 'graphql_query' => 'query {
-    repository(owner: "facebook", name: "react") {
-        issue(number: 10) {
-            title
-            comments(first: 100) {
-                nodes {
-                    body
-                }
-            }
+  search(
+    type: ISSUE
+    query: "repo:bitcoin/bitcoin in:title bug"
+    first: 1
+  ) {
+    nodes {
+      ... on Issue {
+        comments(first: 100) {
+          pageInfo {
+            hasNextPage
+            endCursor
+          }
+          nodes {
+            bodyText
+          }
         }
+      }
     }
+  }
 }
             ',
             ],
