@@ -321,6 +321,36 @@ class QuerySeeder extends Seeder
 }
             ',
             ],
+            'Q15' => [
+                'name' => 'Q15',
+                'type' => $simple,
+                'description' => 'View detail of paper',
+                'rest_query' => 'query?id_list=1706.03762',
+                'graphql_query' => 'query Q15_ViewSinglePaper {
+  paper(id: "1706.03762") {
+    id
+    title
+    published
+  }
+}
+            ',
+            ],
+            'Q16' => [
+                'name' => 'Q16',
+                'type' => $complex,
+                'description' => 'Search paper in all category',
+                'rest_query' => 'query?search_query=cat:cs.AI&start=0&max_results=1000&sortBy=submittedDate&sortOrder=descending',
+                'graphql_query' => 'query {
+    feed(
+        limit: 100
+    ){
+        id
+        title
+        published
+    }
+}
+            ',
+            ],
         ];
 
         // Insert queries

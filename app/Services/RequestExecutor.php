@@ -25,7 +25,10 @@ class RequestExecutor
     {
         try {
             $metrics = MetricCollector::capture(function () use ($query) {
-                return $this->client->getRestResponse($query->rest_query);
+                if ($query->query_id < 15) {
+                    return $this->client->getRestResponse($query->rest_query);
+                }
+                return $this->client->getArxivRestResponse($query->rest_query);
             });
 
             if ($metrics['response']->failed()) {
@@ -42,7 +45,10 @@ class RequestExecutor
     {
         try {
             $metrics = MetricCollector::capture(function () use ($query) {
-                return $this->client->postGraphQL(['query' => $query->graphql_query]);
+                if ($query->query_id < 15) {
+                    return $this->client->postGraphQL(['query' => $query->graphql_query]);
+                }
+                return $this->client->getArxivGraphQLResponse(['query' => $query->graphql_query]);
             });
 
             if ($metrics['response']->failed() || isset($metrics['response']['errors'])) {
@@ -84,13 +90,19 @@ class RequestExecutor
         // Lakukan fetching tanpa menyimpan ke DB
         if ($type === ApiType::Rest) {
             $metrics = MetricCollector::capture(function () use ($query) {
-                return $this->client->getRestResponse($query->rest_query);
+                if ($query->query_id < 15) {
+                    return $this->client->getRestResponse($query->rest_query);
+                }
+                return $this->client->getArxivRestResponse($query->rest_query);
             });
 
             $status = !$metrics['response']->failed() ? ApiStatusType::Success : ApiStatusType::Failed;
         } else { // GraphQL
             $metrics = MetricCollector::capture(function () use ($query) {
-                return $this->client->postGraphQL(['query' => $query->graphql_query]);
+                if ($query->query_id < 15) {
+                    return $this->client->postGraphQL(['query' => $query->graphql_query]);
+                }
+                return $this->client->getArxivGraphQLResponse(['query' => $query->graphql_query]);
             });
 
             $status = (!$metrics['response']->failed() && !isset($metrics['response']['errors']))

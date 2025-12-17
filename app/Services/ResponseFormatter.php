@@ -8,6 +8,7 @@ use App\Models\ApiTest;
 use App\Models\ApiTestResult;
 use App\Models\QueryPreset;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ResponseFormatter
 {
@@ -21,7 +22,11 @@ class ResponseFormatter
     ): ApiTestResult
     {
         if ($status == ApiStatusType::Failed) {
-            Log::error($apiType->value . ' failed', @$metrics['response']?->collect()->toArray() ?? []);
+            if ($query->query_id < 15) {
+                Log::error($apiType->value . ' failed', @$metrics['response']?->collect()->toArray() ?? []);
+            } else {
+                Log::error($apiType->value . ' failed', json_decode(json_encode(simplexml_load_string(@$metrics['response']->body())), true));
+            }
         }
 
         $data = array_merge([
@@ -33,7 +38,12 @@ class ResponseFormatter
         ], $metrics ?? [], $extraData);
 
         if (isset($data['response'])) {
-            $data['response'] = $data['response']->collect() ?? [];
+            if (Str::contains($data['response']->header('content-type'), 'json')) {
+                $data['response'] = $data['response']->collect() ?? [];
+            } else {
+                $data['response'] = json_decode(json_encode(simplexml_load_string($data['response']->body())), true);;
+            }
+
         }
 
         return $apiTest->results()->create($data);

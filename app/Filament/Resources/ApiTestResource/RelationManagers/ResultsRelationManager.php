@@ -21,6 +21,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Number;
 
 class ResultsRelationManager extends RelationManager
@@ -69,7 +70,7 @@ class ResultsRelationManager extends RelationManager
             ->columns([
                 TextColumn::make('queryModel.name')
                     ->label('Query')
-                    ->sortable()
+                    ->sortable(['id'])
                     ->searchable(),
                 TextColumn::make('api_type')
                     ->label('API')
@@ -115,7 +116,7 @@ class ResultsRelationManager extends RelationManager
             ->filters([
                 SelectFilter::make('query_id')
                     ->label('Query')
-                    ->relationship('queryModel', 'name')
+                    ->relationship('queryModel', 'name', fn(Builder $query) => $query->orderBy('id'))
                     ->multiple()
                     ->preload()
                     ->searchable(),
@@ -130,6 +131,7 @@ class ResultsRelationManager extends RelationManager
                     ->multiple()
                     ->searchable(),
             ])
+            ->deferFilters(false)
             ->headerActions([
 //                CreateAction::make(),
 //                AssociateAction::make(),
