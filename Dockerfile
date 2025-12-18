@@ -61,8 +61,8 @@ COPY --chown=www-data:www-data . /var/www/html
 #RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
 #    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
 
-RUN pwd && ls
-
-RUN composer run-script setup
+#RUN pwd && ls
+#
+#RUN composer run-script setup
 
 USER www-data
