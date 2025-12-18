@@ -67,3 +67,8 @@ ENV PHP_OPCACHE_ENABLE="1" \
     AUTORUN_ENABLED="true"
 
 USER www-data
+
+
+FROM deploy AS horizon
+
+CMD ["php", "artisan", "horizon"]
