@@ -1,100 +1,11 @@
 services:
-  traefik:
-    image: traefik:v3.2
-    ports:
-      - "80:80"
-      - "443:443"
-    networks:
-      - web_public
-    volumes:
-      # Mount the Docker socket as read-only so Traefik can listen to events
-      - /var/run/docker.sock:/var/run/docker.sock:ro
-      - ./.infrastructure/conf/traefik/dev/traefik.yml:/traefik.yml:ro
-      - ./.infrastructure/conf/traefik/dev/traefik-certs.yml:/traefik-certs.yml
-      - ./.infrastructure/conf/traefik/dev/certificates/:/certificates
-    restart: unless-stopped
-
   php:
     build:
-      target: development
-      args:
-        USER_ID: 1000
-        GROUP_ID: 1000
-    restart: unless-stopped
-    working_dir: /var/www/html
-    volumes:
-      - .:/var/www/html/
-    networks:
-      - web_public
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.laravel.rule=HostRegexp(`${APP_DOMAIN}`)"
-      #      - "traefik.http.routers.laravel.entrypoints=web"
-      #      - "traefik.http.services.laravel.loadbalancer.server.port=8080"
-      #      - "traefik.http.services.laravel.loadbalancer.server.scheme=http"
-      - "traefik.http.routers.my-php-app.entrypoints=websecure"
-      #      - "traefik.http.routers.my-php-app.tls=true"
-      - "traefik.http.services.my-php-app.loadbalancer.server.port=8443"
-      - "traefik.http.services.my-php-app.loadbalancer.server.scheme=https"
+      target: deploy
 
   horizon:
     build:
-      target: development
-      args:
-        USER_ID: 1000
-        GROUP_ID: 1000
+      target: deploy
     command: php artisan horizon
-    volumes:
-      - .:/var/www/html/
-    networks:
-      - web_public
     depends_on:
       - redis
-    restart: unless-stopped
-
-  node:
-    image: node:22
-    volumes:
-      - .:/usr/src/app/
-    working_dir: /usr/src/app/
-    networks:
-      - web_public
-
-  postgres:
-    image: postgres:16.0
-    networks:
-      - web_public
-    volumes:
-      - ./.infrastructure/volume_data/postgres-prod/database_data/:/var/lib/postgresql/data
-    environment:
-      POSTGRES_PASSWORD: "${DB_ROOT_PASSWORD}"
-      POSTGRES_DB: "${DB_POSTGRES_DATABASE}"
-      POSTGRES_USER: "${DB_POSTGRES_USERNAME}"
-    ports:
-      - "${FORWARD_PORT_POSTGRES:-5432}:5432"
-    healthcheck:
-      test: [ "CMD", "pg_isready", "-U", "${DB_POSTGRES_USERNAME}" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-      start_period: 120s
-    restart: unless-stopped
-
-  redis:
-    image: redis:latest
-    volumes:
-      - redis_data:/data
-    networks:
-      - web_public
-    healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
-      interval: 5s
-      timeout: 3s
-      retries: 3
-    restart: unless-stopped
-
-networks:
-  web_public:
-
-volumes:
-  redis_data:
