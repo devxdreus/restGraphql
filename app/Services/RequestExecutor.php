@@ -21,8 +21,14 @@ class RequestExecutor
 //        $this->cacheManager = new CacheManager();
     }
 
-    public function fetchRestData(ApiTest $apiTest, QueryPreset $query): ApiTestResult
+    public function fetchRestData(ApiTest $apiTest, QueryPreset $query, ?ApiTestResult $result = null): ApiTestResult
     {
+        // query yang menggunakan endpoint search
+        // untuk menghindari rate limit
+        if (in_array($query->query_id, [1, 4, 8, 10, 13])) {
+            sleep(2);
+        }
+
         try {
             $metrics = MetricCollector::capture(function () use ($query) {
                 if ($query->query_id < 15) {
@@ -32,16 +38,16 @@ class RequestExecutor
             });
 
             if ($metrics['response']->failed()) {
-                return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Failed, $metrics);
+                return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Failed, $metrics, $result);
             }
 
-            return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Success, $metrics);
+            return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Success, $metrics, $result);
         } catch (\Exception $e) {
-            return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Failed, []);
+            return $this->storeAndCache($apiTest, $query, ApiType::Rest, ApiStatusType::Failed, [], $result);
         }
     }
 
-    public function fetchGraphQLData(ApiTest $apiTest, QueryPreset $query): ApiTestResult
+    public function fetchGraphQLData(ApiTest $apiTest, QueryPreset $query, ?ApiTestResult $result = null): ApiTestResult
     {
         try {
             $metrics = MetricCollector::capture(function () use ($query) {
@@ -52,12 +58,12 @@ class RequestExecutor
             });
 
             if ($metrics['response']->failed() || isset($metrics['response']['errors'])) {
-                return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed, $metrics);
+                return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed, $metrics, $result);
             }
 
-            return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Success, $metrics);
+            return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Success, $metrics, $result);
         } catch (\Exception $e) {
-            return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed, []);
+            return $this->storeAndCache($apiTest, $query, ApiType::Graphql, ApiStatusType::Failed, [], $result);
         }
     }
 
@@ -70,8 +76,13 @@ class RequestExecutor
 
         if ($winner === ApiType::Rest) {
             $resultData = $this->fetchRestData($apiTest, $query);
+
         } else {
             $resultData = $this->fetchGraphQLData($apiTest, $query);
+        }
+
+        if ($resultData->status === ApiStatusType::Failed) {
+            $resultData = $this->fetchFallbackApi($apiTest, $query, $resultData);
         }
 
         $resultData->update(['api_type' => ApiType::Integrated]);
@@ -123,15 +134,31 @@ class RequestExecutor
         return $cachedData;
     }
 
+    private function fetchFallbackApi(ApiTest $apiTest, QueryPreset $query, ApiTestResult $result): ApiTestResult
+    {
+        if ($result->request_type === ApiType::Rest) {
+            $resultData = $this->fetchGraphQLData($apiTest, $query, $result);
+        } else {
+            $resultData = $this->fetchRestData($apiTest, $query, $result);
+        }
+
+        return $resultData;
+    }
+
     private function storeAndCache(
-        ApiTest       $apiTest,
-        QueryPreset   $query,
-        ApiType       $apiType,
-        ApiStatusType $status,
-        array         $metrics
+        ApiTest        $apiTest,
+        QueryPreset    $query,
+        ApiType        $apiType,
+        ApiStatusType  $status,
+        array          $metrics,
+        ?ApiTestResult $testResult = null
     ): ApiTestResult
     {
-        $result = ResponseFormatter::storeResult($apiTest, $query, $apiType, $status, $metrics);
+        if ($testResult) {
+            $result = ResponseFormatter::updateResult($query, $apiType, $status, $metrics, $testResult);
+        } else {
+            $result = ResponseFormatter::storeResult($apiTest, $query, $apiType, $status, $metrics);
+        }
 
         $cachedData = array_merge($result->toArray(), $metrics);
         unset($cachedData['response']);

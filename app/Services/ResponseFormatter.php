@@ -48,4 +48,33 @@ class ResponseFormatter
 
         return $apiTest->results()->create($data);
     }
+
+    public static function updateResult(QueryPreset $query, ApiType $apiType, ApiStatusType $status, array $metrics, ApiTestResult $result): ApiTestResult
+    {
+        if ($status == ApiStatusType::Failed) {
+            if ($query->query_id < 15) {
+                Log::error($apiType->value . ' failed', @$metrics['response']?->collect()->toArray() ?? []);
+            } else {
+                Log::error($apiType->value . ' failed', json_decode(json_encode(simplexml_load_string(@$metrics['response']->body())), true));
+            }
+        }
+
+        $data = array_merge([
+            'api_type' => $apiType,
+            'status' => $status,
+            'request_type' => $apiType,
+        ], $metrics);
+
+        if (isset($data['response'])) {
+            if (Str::contains($data['response']->header('content-type'), 'json')) {
+                $data['response'] = $data['response']->collect() ?? [];
+            } else {
+                $data['response'] = json_decode(json_encode(simplexml_load_string($data['response']->body())), true);;
+            }
+
+        }
+
+        $result->update($data);
+        return $result;
+    }
 }
