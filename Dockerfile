@@ -14,6 +14,8 @@ FROM serversideup/php:8.4-fpm-nginx-alpine AS base
 USER root
 RUN install-php-extensions intl
 
+RUN apk update && apk add nodejs npm
+
 WORKDIR /var/www/html
 
 ############################################
