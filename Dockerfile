@@ -61,6 +61,8 @@ COPY --chown=www-data:www-data . /var/www/html
 #RUN mkdir -p /var/www/html/.infrastructure/volume_data/sqlite/ && \
 #    chown -R www-data:www-data /var/www/html/.infrastructure/volume_data/sqlite/
 
+RUN composer install
+
 ENV PHP_OPCACHE_ENABLE="1" \
     AUTORUN_ENABLED="true"
 
