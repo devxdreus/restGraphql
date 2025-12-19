@@ -55,9 +55,9 @@ class ComparisonStatsWidget extends StatsOverviewWidget
         $overallImprovementPayloadSize = $avgRestGraphqlPayloadSize > 0 ? (($avgRestGraphqlPayloadSize - $integratedAvgPayloadSize) / $avgRestGraphqlPayloadSize) * 100 : 0;
 
         // Memory Usage Stats
-        $restAvgMemUsage = $results->clone()->rest()->avg('mem_usage');
-        $graphqlAvgMemUsage = $results->clone()->graphql()->avg('mem_usage');
-        $integratedAvgMemUsage = $results->clone()->integrated()->avg('mem_usage');
+        $restAvgMemUsage = $results->clone()->rest()->where('mem_usage', '>', 0)->avg('mem_usage');
+        $graphqlAvgMemUsage = $results->clone()->graphql()->where('mem_usage', '>', 0)->avg('mem_usage');
+        $integratedAvgMemUsage = $results->clone()->integrated()->where('mem_usage', '>', 0)->avg('mem_usage');
 
         $improvementMemUsageVsRest = $restAvgMemUsage > 0 ? (($restAvgMemUsage - $integratedAvgMemUsage) / $restAvgMemUsage) * 100 : 0;
         $improvementMemUsageVsGraphQL = $graphqlAvgMemUsage > 0 ? (($graphqlAvgMemUsage - $integratedAvgMemUsage) / $graphqlAvgMemUsage) * 100 : 0;

@@ -20,6 +20,7 @@ class AvgAllMetric extends TableWidget
         $records = ApiTestResult::query()
             ->success()
             ->groupBy('api_type')
+            ->where('mem_usage', '>', 0)
             ->selectRaw('
                 api_type,
                 avg(response_time) as avg_response_time,

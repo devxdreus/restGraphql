@@ -13,7 +13,7 @@ class MemoryUsageDistributionChart extends ChartWidget
 
     public ?ApiTest $record = null;
 
-    public ?string $filter = 'all';
+    public ?string $filter = 'clean';
 
     protected function getData(): array
     {
@@ -69,7 +69,7 @@ class MemoryUsageDistributionChart extends ChartWidget
     {
         return [
             'all' => 'All',
-            'clean' => 'Bersih'
+            'clean' => 'Clean'
         ];
     }
 
