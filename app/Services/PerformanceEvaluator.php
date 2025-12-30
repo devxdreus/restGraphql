@@ -40,8 +40,8 @@ class PerformanceEvaluator
     {
         $minMaxValues = [];
         foreach (self::METRICS as $metric) {
-            $min = $query->testResults()->success()->min($metric);
-            $max = $query->testResults()->success()->max($metric);
+            $min = $query->testResults()->success()->where($metric, '>', 0)->min($metric);
+            $max = $query->testResults()->success()->where($metric, '>', 0)->max($metric);
 
             if ($min === $max) {
                 $min -= 1.0;
