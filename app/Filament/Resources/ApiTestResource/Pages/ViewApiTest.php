@@ -11,6 +11,7 @@ use App\Filament\Resources\ApiTestResource\Widgets\QueryMemoryUsageComparisonCha
 use App\Filament\Resources\ApiTestResource\Widgets\MemoryUsageDistributionChart;
 use App\Filament\Resources\ApiTestResource\Widgets\QueryPayloadSizeComparisonChart;
 use App\Filament\Resources\ApiTestResource\Widgets\PayloadSizeDistributionChart;
+use App\Filament\Resources\ApiTestResource\Widgets\RequestTypeCountChart;
 use App\Filament\Resources\ApiTestResource\Widgets\ResourceUtilizationRadarChart;
 use App\Filament\Resources\ApiTestResource\Widgets\QueryResponseTimeComparisonChart;
 use App\Filament\Resources\ApiTestResource\Widgets\ResponseTimeDistributionChart;
@@ -59,7 +60,7 @@ class ViewApiTest extends ViewRecord
             CpuUsageDistributionChart::class,
 //            ResourceUtilizationRadarChart::class,
             ComparisonStatsWidget::class,
-//            EfficiencyScoreWidget::class,
+            RequestTypeCountChart::class,
         ];
     }
 }
