@@ -6,6 +6,7 @@ use App\Enums\ApiStatusType;
 use App\Enums\ApiType;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,18 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class ApiTestResult extends Model
 {
     use HasFactory;
+
+    protected static function booted(): void
+    {
+        static::creating(function (ApiTestResult $result) {
+            if ($result->status === ApiStatusType::Failed) {
+                $result->response_time = null;
+                $result->payload_size = null;
+                $result->mem_usage = null;
+                $result->cpu_usage = null;
+            }
+        });
+    }
 
     protected function casts(): array
     {
@@ -24,6 +37,13 @@ class ApiTestResult extends Model
             'cpu_usage' => 'decimal:2',
             'mem_usage' => 'decimal:2',
         ];
+    }
+
+    protected function memUsage(): Attribute
+    {
+        return Attribute::make(
+            get: fn($value) => $value < 0 ? null : $value,
+        );
     }
 
     #[Scope]
