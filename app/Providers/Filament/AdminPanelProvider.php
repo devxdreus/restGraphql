@@ -66,6 +66,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->darkMode(false)
             ->sidebarCollapsibleOnDesktop()
-            ->maxContentWidth(Width::Full);
+            ->maxContentWidth(Width::ScreenTwoExtraLarge);
     }
 }
